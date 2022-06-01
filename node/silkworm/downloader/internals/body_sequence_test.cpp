@@ -102,7 +102,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
     BodySequence::kRequestDeadline = std::chrono::seconds(30);
     BodySequence::kNoPeerDelay = std::chrono::milliseconds(1000);
 
-    bs.sync_current_state(highest_body, highest_header);
+    bs.start_bodies_downloading(highest_body, highest_header);
 
     time_point_t tp = std::chrono::system_clock::now();
     seconds_t request_timeout = BodySequence::kRequestDeadline;
@@ -354,7 +354,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
         REQUIRE(statistic.requested_items == 1);
 
         // submit nack
-        bs.request_nack(packet1);
+        bs.request_nack(tp, packet1);
 
         REQUIRE(statistic.requested_items == 0);    // reset
 
@@ -414,7 +414,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
         db::write_canonical_header(txn2, header2);
         db::write_header(txn2, header2, true);
         txn2.commit();
-        bs.sync_current_state(highest_body, 2);
+        bs.start_bodies_downloading(highest_body, 2);
 
         auto [packet2, penalizations2, min_block2] = bs.request_more_bodies(tp, active_peers);
 

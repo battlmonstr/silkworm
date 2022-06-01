@@ -46,7 +46,7 @@ void OutboundGetBlockBodies::execute(Db::ReadOnlyAccess, HeaderChain&, BodySeque
         SILK_TRACE << "Bodies request sent (" << packet << "), received by " << send_outcome.peers_size() << " peer(s)";
 
         if (send_outcome.peers_size() == 0) {
-            bs.request_nack(packet);
+            bs.request_nack(std::chrono::system_clock::now(), packet);
             break;
         }
 
