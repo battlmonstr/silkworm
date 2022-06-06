@@ -39,6 +39,8 @@ class BodySequence_ForTest : public BodySequence {
     using BodySequence::BodyRequest;
     using BodySequence::outstanding_bodies;
     using BodySequence::announced_blocks_;
+    using BodySequence::headers_stage_height_;
+    using BodySequence::highest_body_in_db_;
 };
 
 TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
@@ -118,7 +120,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
         REQUIRE(bs.lowest_block_in_memory() == 0);
 
         // requesting
-        auto [packet, penalizations, min_block] = bs.request_more_bodies(tp, active_peers);
+       auto [packet, penalizations, min_block] = bs.request_more_bodies(tp, active_peers);
 
         REQUIRE(penalizations.empty());
         REQUIRE(min_block > 0);
@@ -414,7 +416,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
         db::write_canonical_header(txn2, header2);
         db::write_header(txn2, header2, true);
         txn2.commit();
-        bs.start_bodies_downloading(highest_body, 2);
+        bs.headers_stage_height_ = 2; // update the target
 
         auto [packet2, penalizations2, min_block2] = bs.request_more_bodies(tp, active_peers);
 
@@ -427,7 +429,7 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
 
         // statistics
         auto& statistic = bs.statistics();
-        REQUIRE(statistic.requested_items == 1); // 1 and not 2 because sync_current_state() reset statistics
+        REQUIRE(statistic.requested_items == 2); // 1 and not 2 because sync_current_state() reset statistics
         REQUIRE(statistic.received_items == 0);
         REQUIRE(statistic.accepted_items == 0);
         REQUIRE(statistic.rejected_items() == 0);

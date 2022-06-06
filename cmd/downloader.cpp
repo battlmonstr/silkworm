@@ -80,7 +80,6 @@ int main(int argc, char* argv[]) {
     log_settings.log_file = "downloader.log";
     log_settings.log_verbosity = log::Level::kInfo;
     log_settings.log_thousands_sep = '\'';
-    log_settings.log_nocolor = true;
 
     // test & measurement only parameters [to remove]
     BodySequence::kMaxBlocksPerMessage = 128;
@@ -124,9 +123,7 @@ int main(int argc, char* argv[]) {
         ChainIdentity chain_identity;
         if (node_settings.chain_config->chain_id == ChainIdentity::mainnet.chain.chain_id)
             chain_identity = ChainIdentity::mainnet;
-        else if (node_settings.chain_config->chain_id == ChainIdentity::goerli.chain.chain_id)
-            chain_identity = ChainIdentity::goerli;
-        else
+        else // for Rinkey & Goerli we have not implemented the consensus engine yet; for Ropsten we lack genesis json file
             throw std::logic_error("Chain id=" + std::to_string(node_settings.chain_config->chain_id) + " not supported");
 
         cout << "Chain/db status:\n"

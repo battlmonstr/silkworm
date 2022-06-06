@@ -71,8 +71,9 @@ class BodySequence {
     [[nodiscard]] BlockNum lowest_block_in_memory() const;
     [[nodiscard]] BlockNum target_height() const;
     [[nodiscard]] size_t outstanding_bodies(time_point_t tp) const;
-    [[nodiscard]] bool has_bodies_to_request(time_point_t tp) const;
+    [[nodiscard]] bool has_bodies_to_request(time_point_t tp, uint64_t active_peers) const;
 
+    [[nodiscard]] size_t deadlines() const;
     [[nodiscard]] const Download_Statistics& statistics() const;
 
     // downloading process tuning parameters
@@ -123,6 +124,53 @@ class BodySequence {
         [[nodiscard]] BlockNum highest_block() const;
     };
 
+    struct Deadlines {
+        using Cardinality = size_t;
+
+        void add(time_point_t tp, Cardinality cardinality) {
+            using secs = std::chrono::seconds;
+            auto rounded_tp = std::chrono::round<secs>(tp);
+            auto d = deadlines_.find(rounded_tp);
+            if (d == deadlines_.end())
+                deadlines_.emplace(rounded_tp, cardinality);  // todo: use hints
+            else
+                d->second += cardinality;
+        }
+
+        void remove(time_point_t tp, Cardinality cardinality) {
+            using secs = std::chrono::seconds;
+            auto rounded_tp = std::chrono::round<secs>(tp);
+            auto d = deadlines_.find(rounded_tp);
+            if (d == deadlines_.end()) return;
+            assert(d->second >= cardinality);
+            d->second -= cardinality;
+            if (d->second == 0) deadlines_.erase(d);
+        }
+
+        [[nodiscard]] Cardinality expired(time_point_t tp) const {
+            using secs = std::chrono::seconds;
+            auto rounded_tp = std::chrono::round<secs>(tp);
+            Cardinality expired{0};
+            auto d = deadlines_.begin();
+            while(d != deadlines_.end() && d->first < rounded_tp) {  // todo: replace with accumulate + lower/upper_bound
+                expired += d->second;
+                d++;
+            }
+            return expired;
+        }
+
+        size_t size() const {
+            return deadlines_.size();
+        }
+
+        void clear() {
+            deadlines_.clear();
+        }
+
+      private:
+        std::map<time_point_t,Cardinality> deadlines_; // ordered according to increasing times
+    };
+
     IncreasingHeightOrderedRequestContainer body_requests_;
     AnnouncedBlocks announced_blocks_;
     std::list<NewBlockPacket> announcements_to_do_;
@@ -135,6 +183,8 @@ class BodySequence {
     BlockNum highest_body_in_db_{0};
     BlockNum headers_stage_height_{0};
     time_point_t last_nack_;
+    Deadlines request_deadlines_;
+
     Download_Statistics statistics_;
 };
 

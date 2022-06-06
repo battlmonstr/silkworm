@@ -87,13 +87,13 @@ void BlockExchange::execution_loop() {
 
         auto now = system_clock::now();
 
-        // request headers: to do
-
-        // request bodies
-        if (body_sequence_.has_bodies_to_request(now)) {
-            auto request_message = std::make_shared<OutboundGetBlockBodies>();
+        // request headers & bodies
+        constexpr auto only_one_request = 1;
+        if (body_sequence_.has_bodies_to_request(now, sentry_.active_peers())) {
+            auto request_message = std::make_shared<OutboundGetBlockBodies>(only_one_request);
             request_message->execute(db_access_, header_chain_, body_sequence_, sentry_);
         }
+        // todo: request headers
 
         // log status
         if (silkworm::log::test_verbosity(silkworm::log::Level::kDebug) && now - last_update > 60s) {
@@ -128,6 +128,7 @@ void BlockExchange::log_status() {
                  << ", mem-height= " << std::setw(10) << std::right << body_sequence_.lowest_block_in_memory()
                  << "~" << std::setw(10) << std::right << body_sequence_.highest_block_in_memory()
                  << ", net-height= " << std::setw(10) << std::right << body_sequence_.target_height()
+                 << ", deadlines= " << std::setw(3) << std::right << body_sequence_.deadlines()
                  << "; stats: " << body_sequence_.statistics();
 }
 
