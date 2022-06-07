@@ -23,6 +23,7 @@ limitations under the License.
 
 #include "db_tx.hpp"
 #include "types.hpp"
+#include <silkworm/common/stopwatch.hpp>
 
 namespace silkworm {
 
@@ -30,7 +31,7 @@ class BodyPersistence {
   public:
     BodyPersistence(Db::ReadWriteAccess::Tx&, const ChainIdentity&);
 
-    void persist(const Block&);
+    bool persist(const Block&);
     void persist(const std::vector<Block>&);
     void close();
 
@@ -43,6 +44,7 @@ class BodyPersistence {
     BlockNum highest_height() const;
     Hash bad_block() const;
 
+    StopWatch::Duration validation_timing;
   private:
     using ConsensusEnginePtr = std::unique_ptr<consensus::IEngine>;
 

@@ -60,10 +60,10 @@ void BodySequence::stop_bodies_downloading() {
     in_downloading_ = false;
 }
 
-size_t BodySequence::outstanding_bodies(time_point_t tp) const {
+long BodySequence::outstanding_bodies(time_point_t tp) const {
     size_t pending = body_requests_.size() - ready_bodies_;
     size_t stale = request_deadlines_.expired(tp);
-    return pending - stale;
+    return static_cast<long>(pending - stale);
 
     /* old algo
     size_t requested_bodies{0};
@@ -156,7 +156,7 @@ Penalty BodySequence::accept_new_block(const Block& block, const PeerId&) {
 bool BodySequence::has_bodies_to_request(time_point_t tp, uint64_t active_peers) const {
     return in_downloading_ &&
            (tp - last_nack_ >= kNoPeerDelay) &&
-           outstanding_bodies(tp) < kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage;
+           outstanding_bodies(tp) < static_cast<long>(kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage);
 }
 
 auto BodySequence::request_more_bodies(time_point_t tp, uint64_t active_peers)

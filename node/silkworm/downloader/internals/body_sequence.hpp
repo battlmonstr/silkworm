@@ -70,7 +70,7 @@ class BodySequence {
     [[nodiscard]] BlockNum highest_block_in_memory() const;
     [[nodiscard]] BlockNum lowest_block_in_memory() const;
     [[nodiscard]] BlockNum target_height() const;
-    [[nodiscard]] size_t outstanding_bodies(time_point_t tp) const;
+    [[nodiscard]] long outstanding_bodies(time_point_t tp) const;
     [[nodiscard]] bool has_bodies_to_request(time_point_t tp, uint64_t active_peers) const;
 
     [[nodiscard]] size_t deadlines() const;

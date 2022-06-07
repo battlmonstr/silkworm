@@ -35,18 +35,22 @@ bool BodyPersistence::unwind_needed() const { return unwind_needed_; }
 BlockNum BodyPersistence::unwind_point() const { return unwind_point_; }
 Hash BodyPersistence::bad_block() const { return bad_block_; }
 
-void BodyPersistence::persist(const Block& block) {
+bool BodyPersistence::persist(const Block& block) {
     Hash block_hash = block.header.hash(); // save cpu
     BlockNum block_num = block.header.number;
 
     // todo: ask! (pre_validate_block() is more strong than Erigon does, but it seems more aligned with the yellow paper)
-    auto validation_result = consensus_engine_->pre_validate_block(block, chain_state_);
+    StopWatch single_execution; single_execution.start();
+    // auto validation_result = consensus_engine_->pre_validate_block(block, chain_state_);  ############### commented only for test
+    ValidationResult validation_result = ValidationResult::kOk;
+    auto [_, single_duration] = single_execution.stop();
+    validation_timing += single_duration;
 
     if (validation_result != ValidationResult::kOk) {
         unwind_needed_ = true;
         unwind_point_ = block_num - 1;
         bad_block_ = block_hash;
-        return;
+        return false;
     }
 
     if (!tx_.has_body(block_hash, block_num))
@@ -56,11 +60,15 @@ void BodyPersistence::persist(const Block& block) {
         highest_height_ = block_num;
         tx_.write_stage_progress(db::stages::kBlockBodiesKey, block_num);
     }
+
+    return true;
 }
 
 void BodyPersistence::persist(const std::vector<Block>& blocks) {
+    validation_timing = StopWatch::Duration{};
     for(auto& block: blocks) {
-        persist(block);
+        bool persisted = persist(block);
+        if (!persisted) break;
     }
 }
 

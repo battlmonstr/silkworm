@@ -145,8 +145,23 @@ Stage::Result BodiesStage::forward([[maybe_unused]] bool first_sync) {
             else if (withdraw_command->result().wait_for(KShortInterval) == std::future_status::ready) {
                 // read response
                 auto bodies = withdraw_command->result().get();
+
+                // inform user
+                if (bodies.size() > 10) {
+                    log::Info() << "[2/16 Bodies] Inserting " << bodies.size() << " bodies...";
+                }
+                StopWatch insertion_timing; insertion_timing.start();
+
                 // persist bodies
                 body_persistence.persist(bodies);
+
+                // inform user
+                if (bodies.size() > 10) {
+                    log::Info() << "[2/16 Bodies] Inserted bodies tot=" << bodies.size()
+                                << " (duration=" << StopWatch::format(insertion_timing.lap_duration()) << "s)"
+                                << " validation timing=" << StopWatch::format(body_persistence.validation_timing);
+                }
+
                 // check unwind condition
                 if (body_persistence.unwind_needed()) {
                     result.status = Result::UnwindNeeded;
