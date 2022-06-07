@@ -89,7 +89,8 @@ void BlockExchange::execution_loop() {
 
         // request headers & bodies
         constexpr auto only_one_request = 1;
-        if (body_sequence_.has_bodies_to_request(now, sentry_.active_peers())) {
+        if (messages_.size() < 2 * BodySequence::kPerPeerMaxOutstandingRequests * sentry_.active_peers() &&  // not too many incoming messages
+            body_sequence_.has_bodies_to_request(now, sentry_.active_peers())) {
             auto request_message = std::make_shared<OutboundGetBlockBodies>(only_one_request);
             request_message->execute(db_access_, header_chain_, body_sequence_, sentry_);
         }
