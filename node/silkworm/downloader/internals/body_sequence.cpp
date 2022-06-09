@@ -18,8 +18,8 @@ limitations under the License.
 #include <silkworm/common/log.hpp>
 #include <silkworm/consensus/base/engine.hpp>
 
+#include "id_sequence.hpp"
 #include "body_sequence.hpp"
-#include "random_number.hpp"
 
 namespace silkworm {
 
@@ -45,7 +45,7 @@ BlockNum BodySequence::highest_block_in_db() const { return highest_body_in_db_;
 BlockNum BodySequence::target_height() const { return headers_stage_height_; }
 BlockNum BodySequence::highest_block_in_memory() const { return body_requests_.highest_block(); }
 BlockNum BodySequence::lowest_block_in_memory() const { return body_requests_.lowest_block(); }
-
+size_t BodySequence::ready_bodies() const { return ready_bodies_; }
 
 void BodySequence::start_bodies_downloading(BlockNum highest_body_in_db, BlockNum highest_header_in_db) {
     highest_body_in_db_ = highest_body_in_db;
@@ -85,6 +85,11 @@ Penalty BodySequence::accept_requested_bodies(BlockBodiesPacket66& packet, const
     Penalty penalty = NoPenalty;
 
     statistics_.received_items += packet.request.size();
+
+    if (!id_sequence_.contains(packet.requestId)) {
+        statistics_.reject_causes.not_requested += packet.request.size();
+        return Penalty::BadBlockPenalty; // todo: improve reason
+    }
 
     // Find matching requests and completing BodyRequest
     auto matching_requests = body_requests_.find_by_request_id(packet.requestId);
@@ -153,23 +158,25 @@ Penalty BodySequence::accept_new_block(const Block& block, const PeerId&) {
     return Penalty::NoPenalty;
 }
 
-bool BodySequence::has_bodies_to_request(time_point_t tp, uint64_t active_peers) const {
+bool BodySequence::has_bodies_to_request(time_point_t tp, [[maybe_unused]] uint64_t active_peers) const {
     return in_downloading_ &&
-           (tp - last_nack_ >= kNoPeerDelay) &&
-           outstanding_bodies(tp) < static_cast<long>(kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage);
+           (tp - last_nack_ >= kNoPeerDelay)
+           //&& outstanding_bodies(tp) < static_cast<long>(kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage)
+           ;
 }
 
 auto BodySequence::request_more_bodies(time_point_t tp, uint64_t active_peers)
     -> std::tuple<GetBlockBodiesPacket66, std::vector<PeerPenalization>, MinBlock> {
+
+    if (!in_downloading_ || (tp - last_nack_ < kNoPeerDelay))
+        return {};
+
     GetBlockBodiesPacket66 packet;
-    packet.requestId = RANDOM_NUMBER.generate_one();
+    packet.requestId = id_sequence_.generate_one();
 
     seconds_t timeout = BodySequence::kRequestDeadline;
 
     BlockNum min_block{0};
-
-    if (!in_downloading_ || (tp - last_nack_ < kNoPeerDelay))
-        return {};
 
     auto penalizations = renew_stale_requests(packet, min_block, tp, timeout);
 
@@ -177,7 +184,8 @@ auto BodySequence::request_more_bodies(time_point_t tp, uint64_t active_peers)
     auto outstanding_bodies = body_requests_.size() - ready_bodies_ - stale_requests;
 
     if (packet.request.size() < kMaxBlocksPerMessage &&   // if this condition is true stale_requests == 0
-        outstanding_bodies < kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage) {
+        outstanding_bodies < kPerPeerMaxOutstandingRequests * active_peers * kMaxBlocksPerMessage &&
+        ready_bodies_ < kMaxInMemoryBodies) {
         make_new_requests(packet, min_block, tp, timeout);
     }
 
@@ -296,6 +304,8 @@ bool BodySequence::is_valid_body(const BlockHeader& header, const BlockBody& bod
 auto BodySequence::withdraw_ready_bodies() -> std::vector<Block> {
     std::vector<Block> ready_bodies;
 
+    withdrawal_time.start();
+
     auto curr_req = body_requests_.begin();
     while (curr_req != body_requests_.end()) {
         BodyRequest& past_request = curr_req->second;
@@ -307,7 +317,9 @@ auto BodySequence::withdraw_ready_bodies() -> std::vector<Block> {
 
         curr_req = body_requests_.erase(curr_req);  // erase curr_req and update curr_req to point to the next request
     }
-    
+
+    withdrawal_time.stop();
+
     ready_bodies_ -= ready_bodies.size();
     return ready_bodies;
 }

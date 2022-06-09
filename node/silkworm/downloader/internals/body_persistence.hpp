@@ -23,7 +23,7 @@ limitations under the License.
 
 #include "db_tx.hpp"
 #include "types.hpp"
-#include <silkworm/common/stopwatch.hpp>
+#include <silkworm/common/execution_time.hpp>
 
 namespace silkworm {
 
@@ -44,7 +44,7 @@ class BodyPersistence {
     BlockNum highest_height() const;
     Hash bad_block() const;
 
-    StopWatch::Duration validation_timing;
+    ExecutionTime validation_time;
   private:
     using ConsensusEnginePtr = std::unique_ptr<consensus::IEngine>;
 

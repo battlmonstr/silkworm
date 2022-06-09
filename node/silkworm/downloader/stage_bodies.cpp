@@ -147,7 +147,7 @@ Stage::Result BodiesStage::forward([[maybe_unused]] bool first_sync) {
                 auto bodies = withdraw_command->result().get();
 
                 // inform user
-                if (bodies.size() > 10) {
+                if (bodies.size() > 100) {
                     log::Info() << "[2/16 Bodies] Inserting " << bodies.size() << " bodies...";
                 }
                 StopWatch insertion_timing; insertion_timing.start();
@@ -156,10 +156,10 @@ Stage::Result BodiesStage::forward([[maybe_unused]] bool first_sync) {
                 body_persistence.persist(bodies);
 
                 // inform user
-                if (bodies.size() > 10) {
+                if (bodies.size() > 100) {
                     log::Info() << "[2/16 Bodies] Inserted bodies tot=" << bodies.size()
-                                << " (duration=" << StopWatch::format(insertion_timing.lap_duration()) << "s)"
-                                << " validation timing=" << StopWatch::format(body_persistence.validation_timing);
+                                << " (duration=" << StopWatch::format(insertion_timing.lap_duration()) << ")"
+                                << " validation timing=" << body_persistence.validation_time.format();
                 }
 
                 // check unwind condition

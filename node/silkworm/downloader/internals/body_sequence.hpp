@@ -20,14 +20,16 @@ limitations under the License.
 #include <list>
 
 #include <silkworm/chain/identity.hpp>
+#include <silkworm/common/execution_time.hpp>
 
 #include <silkworm/downloader/packets/new_block_packet.hpp>
 #include <silkworm/downloader/packets/block_bodies_packet.hpp>
 #include <silkworm/downloader/packets/get_block_bodies_packet.hpp>
 
 #include "db_tx.hpp"
-#include "statistics.hpp"
+#include "id_sequence.hpp"
 #include "types.hpp"
+#include "statistics.hpp"
 
 namespace silkworm {
 
@@ -72,6 +74,7 @@ class BodySequence {
     [[nodiscard]] BlockNum target_height() const;
     [[nodiscard]] long outstanding_bodies(time_point_t tp) const;
     [[nodiscard]] bool has_bodies_to_request(time_point_t tp, uint64_t active_peers) const;
+    [[nodiscard]] size_t ready_bodies() const;
 
     [[nodiscard]] size_t deadlines() const;
     [[nodiscard]] const Download_Statistics& statistics() const;
@@ -84,6 +87,9 @@ class BodySequence {
     static /*constexpr*/ size_t kPerPeerMaxOutstandingRequests; // = 4;
     static /*constexpr*/ BlockNum kMaxBlocksPerMessage; // = 128;               // go-ethereum client acceptance limit
     static constexpr BlockNum kMaxAnnouncedBlocks = 10000;
+    static constexpr BlockNum kMaxInMemoryBodies = 30000;
+
+    ExecutionTime withdrawal_time;
 
   protected:
     void recover_initial_state();
@@ -141,7 +147,8 @@ class BodySequence {
             using secs = std::chrono::seconds;
             auto rounded_tp = std::chrono::round<secs>(tp);
             auto d = deadlines_.find(rounded_tp);
-            if (d == deadlines_.end()) return;
+            if (d == deadlines_.end())
+                return;
             assert(d->second >= cardinality);
             d->second -= cardinality;
             if (d->second == 0) deadlines_.erase(d);
@@ -184,6 +191,7 @@ class BodySequence {
     BlockNum headers_stage_height_{0};
     time_point_t last_nack_;
     Deadlines request_deadlines_;
+    MonotonicIdSequence id_sequence_;
 
     Download_Statistics statistics_;
 };

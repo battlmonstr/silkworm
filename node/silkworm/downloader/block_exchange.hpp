@@ -51,6 +51,7 @@ class BlockExchange : public ActiveComponent {
     HeaderChain header_chain_;
     BodySequence body_sequence_;
     MessageQueue messages_{};  // thread safe queue where to receive messages from sentry
+    ExecutionTime req_more_bodies_time;
 };
 
 }  // namespace silkworm

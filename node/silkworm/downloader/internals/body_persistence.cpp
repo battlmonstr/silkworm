@@ -40,11 +40,10 @@ bool BodyPersistence::persist(const Block& block) {
     BlockNum block_num = block.header.number;
 
     // todo: ask! (pre_validate_block() is more strong than Erigon does, but it seems more aligned with the yellow paper)
-    StopWatch single_execution; single_execution.start();
+    validation_time.start();
     // auto validation_result = consensus_engine_->pre_validate_block(block, chain_state_);  ############### commented only for test
     ValidationResult validation_result = ValidationResult::kOk;
-    auto [_, single_duration] = single_execution.stop();
-    validation_timing += single_duration;
+    validation_time.stop();
 
     if (validation_result != ValidationResult::kOk) {
         unwind_needed_ = true;
@@ -53,19 +52,21 @@ bool BodyPersistence::persist(const Block& block) {
         return false;
     }
 
+    /* ############### commented only for test
     if (!tx_.has_body(block_hash, block_num))
         tx_.write_body(block, block_hash, block_num);
+    */
 
     if (block_num > highest_height_) {
         highest_height_ = block_num;
-        tx_.write_stage_progress(db::stages::kBlockBodiesKey, block_num);
+        //tx_.write_stage_progress(db::stages::kBlockBodiesKey, block_num); ############### commented only for test
     }
 
     return true;
 }
 
 void BodyPersistence::persist(const std::vector<Block>& blocks) {
-    validation_timing = StopWatch::Duration{};
+    validation_time.reset();
     for(auto& block: blocks) {
         bool persisted = persist(block);
         if (!persisted) break;

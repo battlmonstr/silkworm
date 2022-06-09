@@ -44,9 +44,7 @@ HeaderChain::HeaderChain(ConsensusEnginePtr consensus_engine)
         // or must the downloader go on and return StageResult::kUnknownConsensusEngine?
     }
 
-    RandomNumber random(100'000'000, 1'000'000'000);
-    request_id_prefix = random.generate_one();
-    SILK_TRACE << "HeaderChain: request id prefix=" << request_id_prefix;
+    SILK_TRACE << "HeaderChain: request id prefix=" << id_sequence_.prefix();
 }
 
 BlockNum HeaderChain::highest_block_in_db() const { return highest_in_db_; }
@@ -272,7 +270,7 @@ std::optional<GetBlockHeadersPacket66> HeaderChain::request_skeleton() {
     }
 
     GetBlockHeadersPacket66 packet;
-    packet.requestId = generate_request_id(); //RANDOM_NUMBER.generate_one();
+    packet.requestId = id_sequence_.generate_one();
     packet.request.origin = bottom;
     packet.request.amount = length;
     packet.request.skip = stride - 1;
@@ -348,7 +346,7 @@ auto HeaderChain::request_more_headers(time_point_t time_point, seconds_t timeou
             anchor_queue_.fix();  // re-sort
 
             GetBlockHeadersPacket66 packet{
-                generate_request_id(), //RANDOM_NUMBER.generate_one(),
+                id_sequence_.generate_one(),
                     {anchor->blockHeight, max_len, 0, true}
             }; // we use blockHeight in place of parentHash to get also ommers if presents
             // we could request from origin=blockHeight-1 but debugging becomes more difficult
@@ -447,7 +445,7 @@ auto HeaderChain::accept_headers(const std::vector<BlockHeader>& headers, uint64
     statistics_.received_items += headers.size();
 
     if (headers.begin()->number < top_seen_height_ &&  // an old header announcement? .
-        !is_valid_request_id(requestId)) {   // anyway is not requested by us..
+        !id_sequence_.contains(requestId)) {   // anyway is not requested by us..
         statistics_.reject_causes.not_requested += headers.size();
         SILK_TRACE << "Rejecting message with reqId=" << requestId << " and first block=" << headers.begin()->number;
         return {Penalty::NoPenalty, request_more_headers};
@@ -921,17 +919,6 @@ void HeaderChain::mark_as_preverified(std::shared_ptr<Link> link) {
 
 void HeaderChain::set_preverified_hashes(PreverifiedHashes preverifiedHashes) {
     preverified_hashes_ = std::move(preverifiedHashes);
-}
-
-uint64_t HeaderChain::generate_request_id() {
-    request_count++;
-    if (request_count >= 10000) request_count = 0;
-    return request_id_prefix * 10000 + request_count;
-}
-
-uint64_t HeaderChain::is_valid_request_id(uint64_t request_id) {
-    uint64_t prefix = request_id / 10000;
-    return request_id_prefix == prefix;
 }
 
 const Download_Statistics& HeaderChain::statistics() const {

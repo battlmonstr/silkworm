@@ -58,7 +58,8 @@ void BlockExchange::receive_message(const sentry::InboundMessage& raw_message) {
     }
     catch(rlp::DecodingError& error) {
         log::Warning() << "BlockExchange received and ignored a malformed message, "
-                          "id=" << raw_message.id() << "/" << sentry::MessageId_Name(raw_message.id());
+                          "id= " << raw_message.id() << "/" << sentry::MessageId_Name(raw_message.id()) <<
+                          " - " << error.what();
     }
 }
 
@@ -88,12 +89,14 @@ void BlockExchange::execution_loop() {
         auto now = system_clock::now();
 
         // request headers & bodies
+        req_more_bodies_time.start();
         constexpr auto only_one_request = 1;
-        if (messages_.size() < 2 * BodySequence::kPerPeerMaxOutstandingRequests * sentry_.active_peers() &&  // not too many incoming messages
+        if (messages_.size() < BodySequence::kPerPeerMaxOutstandingRequests * sentry_.active_peers() &&  // not too many incoming messages
             body_sequence_.has_bodies_to_request(now, sentry_.active_peers())) {
             auto request_message = std::make_shared<OutboundGetBlockBodies>(only_one_request);
             request_message->execute(db_access_, header_chain_, body_sequence_, sentry_);
         }
+        req_more_bodies_time.stop();
         // todo: request headers
 
         // log status
@@ -110,26 +113,33 @@ void BlockExchange::execution_loop() {
 
 void BlockExchange::log_status() {
     log::Debug() << "BlockExchange messages: " << std::setfill('_') << std::setw(5) << std::right
-                 << messages_.size() << " in queue";
+                 << messages_.size() << " in queue,"
+                 << " peers: " << sentry_.active_peers();
 
     auto [min_anchor_height, max_anchor_height] = header_chain_.anchor_height_range();
     log::Debug() << "BlockExchange headers: " << std::setfill('_')
                  << "links= " << std::setw(7) << std::right << header_chain_.pending_links()
-                 << ", anchors= " << std::setw(3) << std::right << header_chain_.anchors()
+                 << ", anchors= " << std::setw(4) << std::right << header_chain_.anchors()
                  << ", db-height= " << std::setw(10) << std::right << header_chain_.highest_block_in_db()
                  << ", mem-height= " << std::setw(10) << std::right << min_anchor_height
                  << "~" << std::setw(10) << std::right << max_anchor_height
+                 << " (" << std::setw(10) << std::right << std::showpos
+                 << max_anchor_height - min_anchor_height << ")"
                  << ", net-height= " << std::setw(10) << std::right << header_chain_.top_seen_block_height()
                  << "; stats: " << header_chain_.statistics();
 
     log::Debug() << "BlockExchange bodies:  " << std::setfill('_')
-                 << "outstanding bodies= " << std::setw(6) << std::right
-                 << body_sequence_.outstanding_bodies(std::chrono::system_clock::now()) << "  "
+                 << "outst= " << std::setw(7) << std::right
+                 << body_sequence_.outstanding_bodies(std::chrono::system_clock::now())
+                 << ", ready= " << std::setw(6) << std::right << body_sequence_.ready_bodies()
                  << ", db-height= " << std::setw(10) << std::right << body_sequence_.highest_block_in_db()
                  << ", mem-height= " << std::setw(10) << std::right << body_sequence_.lowest_block_in_memory()
                  << "~" << std::setw(10) << std::right << body_sequence_.highest_block_in_memory()
+                 << " (" << std::setw(10) << std::right << std::showpos
+                    << body_sequence_.highest_block_in_memory() - body_sequence_.lowest_block_in_memory() << ")"
                  << ", net-height= " << std::setw(10) << std::right << body_sequence_.target_height()
-                 << ", deadlines= " << std::setw(3) << std::right << body_sequence_.deadlines()
+                 << ", request= " << req_more_bodies_time.format()
+                 << ", withdrawal= " << body_sequence_.withdrawal_time.format()
                  << "; stats: " << body_sequence_.statistics();
 }
 
