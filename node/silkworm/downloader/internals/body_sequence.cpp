@@ -52,7 +52,6 @@ void BodySequence::start_bodies_downloading(BlockNum highest_body_in_db, BlockNu
     headers_stage_height_ = highest_header_in_db;
     in_downloading_ = true;
     body_requests_.clear();
-    request_deadlines_.clear();
     statistics_ = {}; // reset statistics
 }
 
@@ -61,12 +60,11 @@ void BodySequence::stop_bodies_downloading() {
 }
 
 long BodySequence::outstanding_bodies(time_point_t tp) const {
-    size_t pending = body_requests_.size() - ready_bodies_;
-    size_t stale = request_deadlines_.expired(tp);
-    return static_cast<long>(pending - stale);
+    //size_t pending = body_requests_.size() - ready_bodies_;
+    //size_t stale = request_deadlines_.expired(tp);
+    //return static_cast<long>(pending - stale);
 
-    /* old algo
-    size_t requested_bodies{0};
+    long requested_bodies{0};
     for (auto& br: body_requests_) {
         const BodyRequest& past_request = br.second;
         if (!past_request.ready &&
@@ -74,7 +72,6 @@ long BodySequence::outstanding_bodies(time_point_t tp) const {
             requested_bodies++;
     }
     return requested_bodies;
-    */
 }
 
 std::list<NewBlockPacket>& BodySequence::announces_to_do() {
@@ -129,7 +126,6 @@ Penalty BodySequence::accept_requested_bodies(BlockBodiesPacket66& packet, const
             request.body = std::move(body);
             request.ready = true;
             ready_bodies_ += 1;
-            request_deadlines_.remove(request.request_time, 1);
             statistics_.accepted_items += 1;
             SILK_TRACE << "BodySequence: body accepted, block_num=" << request.block_height;
         }
@@ -142,7 +138,6 @@ Penalty BodySequence::accept_requested_bodies(BlockBodiesPacket66& packet, const
     // Process remaining elements in matching_requests invalidating corresponding BodyRequest
     for(auto& elem: matching_requests) {
         BodyRequest& request = elem->second;
-        request_deadlines_.remove(request.request_time, 1);
         request.request_id = 0;
         request.request_time = time_point_t();
     }
@@ -189,7 +184,6 @@ auto BodySequence::request_more_bodies(time_point_t tp, uint64_t active_peers)
         make_new_requests(packet, min_block, tp, timeout);
     }
 
-    request_deadlines_.add(tp, packet.request.size());
     statistics_.requested_items += packet.request.size();
 
     return {std::move(packet), std::move(penalizations), min_block};
@@ -206,7 +200,6 @@ auto BodySequence::renew_stale_requests(GetBlockBodiesPacket66& packet, BlockNum
         if (past_request.ready || tp - past_request.request_time < timeout)
             continue;
 
-        request_deadlines_.remove(past_request.request_time, 1);
         // retry body request, todo: Erigon delete the request here, but will it retry?
         packet.request.push_back(past_request.block_hash);
         past_request.request_time = tp;
@@ -288,8 +281,6 @@ void BodySequence::request_nack(time_point_t tp, const GetBlockBodiesPacket66& p
     }
 
     size_t cardinality = packet.request.size();
-    request_deadlines_.remove(old_tp, cardinality);
-    request_deadlines_.add(tp, cardinality);
     statistics_.requested_items -= cardinality;
 }
 
@@ -396,10 +387,6 @@ BlockNum BodySequence::IncreasingHeightOrderedRequestContainer::highest_block() 
 
 const Download_Statistics& BodySequence::statistics() const {
     return statistics_;
-}
-
-size_t BodySequence::deadlines() const {
-    return request_deadlines_.size();
 }
 
 }
