@@ -41,8 +41,7 @@ bool BodyPersistence::persist(const Block& block) {
 
     // todo: ask! (pre_validate_block() is more strong than Erigon does, but it seems more aligned with the yellow paper)
     validation_time.start();
-    // auto validation_result = consensus_engine_->pre_validate_block(block, chain_state_);  ############### commented only for test
-    ValidationResult validation_result = ValidationResult::kOk;
+    auto validation_result = consensus_engine_->pre_validate_block(block, chain_state_);
     validation_time.stop();
 
     if (validation_result != ValidationResult::kOk) {
@@ -52,14 +51,12 @@ bool BodyPersistence::persist(const Block& block) {
         return false;
     }
 
-    /* ############### commented only for test
     if (!tx_.has_body(block_hash, block_num))
         tx_.write_body(block, block_hash, block_num);
-    */
 
     if (block_num > highest_height_) {
         highest_height_ = block_num;
-        //tx_.write_stage_progress(db::stages::kBlockBodiesKey, block_num); ############### commented only for test
+        tx_.write_stage_progress(db::stages::kBlockBodiesKey, block_num);
     }
 
     return true;

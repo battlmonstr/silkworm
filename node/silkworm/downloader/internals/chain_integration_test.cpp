@@ -32,7 +32,7 @@ namespace silkworm {
 
 class HeaderChain_ForTest : public HeaderChain {
   public:  // publication of internal members to test methods functioning
-    using HeaderChain::generate_request_id;
+    using HeaderChain::id_sequence_;
     using HeaderChain::HeaderChain;
 };
 
@@ -78,7 +78,7 @@ TEST_CASE("working/persistent-chain integration test") {
         HeaderChain_ForTest wc(std::make_unique<DummyConsensusEngine>());
         wc.recover_initial_state(tx);
         wc.sync_current_state(highest_in_db);
-        auto request_id = wc.generate_request_id();
+        auto request_id = wc.id_sequence_.generate_one();
 
         // auto timestamp = header0->timestamp;
 
@@ -169,7 +169,7 @@ TEST_CASE("working/persistent-chain integration test") {
         HeaderChain_ForTest wc(std::make_unique<DummyConsensusEngine>());
         wc.recover_initial_state(tx);
         wc.sync_current_state(highest_in_db);
-        auto request_id = wc.generate_request_id();
+        auto request_id = wc.id_sequence_.generate_one();
 
         // receiving 2 headers from a peer
         BlockHeader header1;
@@ -282,7 +282,7 @@ TEST_CASE("working/persistent-chain integration test") {
         HeaderChain_ForTest wc(std::make_unique<DummyConsensusEngine>());
         wc.recover_initial_state(tx);
         wc.sync_current_state(highest_in_db);
-        auto request_id = wc.generate_request_id();
+        auto request_id = wc.id_sequence_.generate_one();
 
         // receiving 2 headers from a peer
         BlockHeader header1;
@@ -398,7 +398,7 @@ TEST_CASE("working/persistent-chain integration test") {
         HeaderChain_ForTest wc(std::make_unique<DummyConsensusEngine>());
         wc.recover_initial_state(tx);
         wc.sync_current_state(highest_in_db);
-        auto request_id = wc.generate_request_id();
+        auto request_id = wc.id_sequence_.generate_one();
 
         // receiving 1 header from a peer
         BlockHeader header1b;

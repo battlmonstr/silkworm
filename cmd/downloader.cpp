@@ -192,8 +192,9 @@ int main(int argc, char* argv[]) {
         message_receiving.join();
         stats_receiving.join();
         block_downloading.join();
-    } catch (const CLI::ParseError& ex) {
-        return app.exit(ex);
+    }
+    catch (const CLI::ParseError& ex) {
+        return_value = app.exit(ex);
     }
     catch (std::exception& e) {
         cerr << "Exception (type " << typeid(e).name() << "): " << e.what() << "\n";
