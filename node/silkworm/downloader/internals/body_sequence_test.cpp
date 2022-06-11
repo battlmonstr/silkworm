@@ -360,6 +360,17 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
 
         REQUIRE(statistic.requested_items == 0);    // reset
 
+        // add another body to request
+        BlockHeader header2;
+        header2.number = 2;
+        header2.parent_hash = header1_hash;
+        auto txn2 = context.env().start_write();
+        db::write_canonical_header_hash(txn2, header2.hash().bytes, 1);
+        db::write_canonical_header(txn2, header2);
+        db::write_header(txn2, header2, true);
+        txn2.commit();
+        bs.headers_stage_height_ = 2; // update the target
+
         // make another request in the same time
         auto [packet2, penalizations2, min_block2] = bs.request_more_bodies(tp, active_peers);
 
