@@ -377,11 +377,26 @@ TEST_CASE("body downloading", "[silkworm][downloader][BodySequence]") {
         REQUIRE(packet2.request.empty());   // no new request, last was a nack
         REQUIRE(bs.body_requests_.size() == 1);
 
+        // make another request before time out
+        tp += BodySequence_ForTest::kNoPeerDelay - milliseconds_t(1);
+        auto [packet3, penalizations3, min_block3] = bs.request_more_bodies(tp, active_peers);
+
+        REQUIRE(packet3.request.empty());   // no new request, last was a nack
+        REQUIRE(bs.body_requests_.size() == 1);
+
         // statistics
         REQUIRE(statistic.requested_items == 0);
         REQUIRE(statistic.received_items == 0);
         REQUIRE(statistic.accepted_items == 0);
         REQUIRE(statistic.rejected_items() == 0);
+
+        // make another request after time out
+        tp += milliseconds_t(2);
+        auto [packet4, penalizations4, min_block4] = bs.request_more_bodies(tp, active_peers);
+
+        REQUIRE(!packet4.request.empty());
+        REQUIRE(bs.body_requests_.size() == 2);
+
     }
 
     SECTION("should not renew ready requests") {
