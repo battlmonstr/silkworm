@@ -37,7 +37,7 @@ commands:
       - run:
           name: "Cmake"
           working_directory: ~/build
-          command: cmake ../project -DCMAKE_TOOLCHAIN_FILE=$HOME/project/cmake/toolchain/$TOOLCHAIN.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DSILKWORM_CLANG_COVERAGE=$CLANG_COVERAGE -DSILKWORM_SANITIZE=$SANITIZE
+          command: cmake ../project -DCMAKE_TOOLCHAIN_FILE=$HOME/project/cmake/toolchain/$TOOLCHAIN.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DSILKWORM_CLANG_COVERAGE=$CLANG_COVERAGE -DSILKWORM_SANITIZE=$SANITIZE -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
       - save_cache:
           name: "Save Hunter cache"
           key: *hunter-cache-key
@@ -56,6 +56,16 @@ commands:
           command: |
             sudo apt-get update
             sudo apt -y install libc++-$CLANG_VERSION-dev libc++abi-$CLANG_VERSION-dev
+
+  test_clang:
+    steps:
+      - run:
+          name: "test_clang"
+          command: |
+            which clang++
+            clang++ --version
+            echo -e "#include <filesystem>\n int main() { std::string s{\"abc\"}; return 0; }" > main.cpp
+            clang++ -v -std=c++20 -stdlib=libc++ main.cpp
 
   test:
     steps:
@@ -128,22 +138,6 @@ jobs:
       CLANG_VERSION: 13
       BUILD_TYPE: Debug
       CLANG_COVERAGE: OFF
-      SANITIZE: address
-    docker:
-      - image: ethereum/cpp-build-env:17-clang-13
-    resource_class: xlarge
-    steps:
-      - checkout_with_submodules
-      - install_libcxx
-      - build
-      - test
-
-  linux-clang-13-coverage:
-    environment:
-      TOOLCHAIN: clang_libcxx
-      CLANG_VERSION: 13
-      BUILD_TYPE: Debug
-      CLANG_COVERAGE: ON
       SANITIZE: OFF
     docker:
       - image: ethereum/cpp-build-env:17-clang-13
@@ -151,43 +145,24 @@ jobs:
     steps:
       - checkout_with_submodules
       - install_libcxx
+      - test_clang
       - build
-      - run:
-          name: "Core unit tests"
-          working_directory: ~/build
-          command: |
-            cmd/test/core_test
-            mv default.profraw core_test.profraw
-      - run:
-          name: "Node unit tests"
-          working_directory: ~/build
-          command: |
-            cmd/test/node_test
-            mv default.profraw node_test.profraw
-      - run:
-          name: "Ethereum consensus tests"
-          working_directory: ~/build
-          no_output_timeout: 20m
-          command: |
-            cmd/test/consensus
-            mv default.profraw consensus.profraw
-      - run:
-          name: "Coverage"
-          working_directory: ~/build
-          command: |
-            llvm-profdata merge *.profraw -o profdata
-            llvm-cov export -instr-profile profdata -format=lcov cmd/test/node_test -object cmd/test/consensus > silkworm.lcov
-      - run:
-          name: "Upload to Codecov"
-          command: |
-            sudo pip3 install --upgrade --quiet --no-cache-dir codecov
 
-            counter=1
-            until codecov --required --file ~/build/silkworm.lcov -X gcov || [ $counter = 5 ]; do
-              counter=$((counter+1))
-              sleep 1
-              echo "Try #$counter..."
-            done
+  linux-clang-13-coverage:
+    environment:
+      TOOLCHAIN: clang_libcxx
+      CLANG_VERSION: 13
+      BUILD_TYPE: Debug
+      CLANG_COVERAGE: OFF
+      SANITIZE: OFF
+    docker:
+      - image: ethereum/cpp-build-env:17-clang-13
+    resource_class: xlarge
+    steps:
+      - checkout_with_submodules
+      - install_libcxx
+      - test_clang
+      - build
 
   linux-wasm-build:
     environment:
@@ -238,9 +213,4 @@ workflows:
   version: 2
   silkworm:
     jobs:
-      - linux-gcc-10-debug
-      - linux-gcc-12-release
-      - linux-gcc-11-thread-sanitizer
-      - linux-clang-13-coverage
       - linux-clang-13-address-sanitizer
-      - linux-wasm-build
