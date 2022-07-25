@@ -107,7 +107,7 @@ void SentryImpl::start() {
     };
     asio::co_spawn(
             rlpx_io_context,
-            rlpx_server_.start(rlpx_io_context),
+            rlpx_server_.start(context_pool_),
             asio::bind_cancellation_slot(stop_signal_.slot(), rlpx_server_task_completion));
 
     setup_shutdown_on_signals(context_pool_.next_io_context());

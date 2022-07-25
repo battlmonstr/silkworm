@@ -19,7 +19,7 @@
 #include <string>
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
-#include <boost/asio/io_context.hpp>
+#include <silkworm/rpc/server/server_context_pool.hpp>
 
 namespace silkworm::sentry::rlpx {
 
@@ -27,7 +27,7 @@ class Server final {
   public:
     Server(std::string host, uint16_t port);
 
-    boost::asio::awaitable<void> start(boost::asio::io_context& io_context);
+    boost::asio::awaitable<void> start(silkworm::rpc::ServerContextPool& context_pool);
 
   private:
     std::string host_;

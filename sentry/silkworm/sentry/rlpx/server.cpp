@@ -16,8 +16,14 @@
 
 #include "server.hpp"
 
+#include <memory>
+
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+
+#include <silkworm/common/log.hpp>
+#include <silkworm/sentry/common/socket.hpp>
 
 namespace silkworm::sentry::rlpx {
 
@@ -25,7 +31,9 @@ using namespace boost::asio;
 
 Server::Server(std::string host, uint16_t port) : host_(std::move(host)), port_(port) {}
 
-awaitable<void> Server::start(io_context& io_context) {
+awaitable<void> Server::start(silkworm::rpc::ServerContextPool& context_pool) {
+    auto io_context = co_await this_coro::executor;
+
     ip::tcp::resolver resolver{io_context};
     auto endpoints = co_await resolver.async_resolve(host_, std::to_string(port_), use_awaitable);
     const ip::tcp::endpoint& endpoint = *endpoints.cbegin();
@@ -45,8 +53,8 @@ awaitable<void> Server::start(io_context& io_context) {
     acceptor.listen();
 
     while (acceptor.is_open()) {
-        ip::tcp::socket socket{io_context};
-        co_await acceptor.async_accept(socket, use_awaitable);
+        auto socket = std::make_unique<common::Socket>(context_pool.next_io_context());
+        co_await acceptor.async_accept(socket->get(), use_awaitable);
     }
 }
 
