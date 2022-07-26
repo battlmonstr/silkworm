@@ -25,6 +25,11 @@ class EnodeUrl {
   public:
     explicit EnodeUrl(const std::string& url_str);
 
+    EnodeUrl(std::string pub_key_hex, boost::asio::ip::address ip, uint16_t port)
+        : pub_key_hex_(std::move(pub_key_hex)),
+          ip_(std::move(ip)),
+          port_(port) {}
+
     [[nodiscard]]
     const std::string& pub_key_hex() const { return pub_key_hex_; }
     [[nodiscard]]

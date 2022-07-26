@@ -95,7 +95,6 @@ SentryImpl::SentryImpl(Settings settings)
 
 void SentryImpl::start() {
     DataDirectory data_dir{settings_.data_dir_path, true};
-    [[maybe_unused]]
     NodeKey node_key = node_key_get_or_generate(settings_.node_key, data_dir);
 
     rpc_server_.build_and_start();
@@ -107,7 +106,7 @@ void SentryImpl::start() {
     };
     asio::co_spawn(
             rlpx_io_context,
-            rlpx_server_.start(context_pool_),
+            rlpx_server_.start(context_pool_, node_key),
             asio::bind_cancellation_slot(stop_signal_.slot(), rlpx_server_task_completion));
 
     setup_shutdown_on_signals(context_pool_.next_io_context());

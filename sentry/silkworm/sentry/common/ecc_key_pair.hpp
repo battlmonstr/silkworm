@@ -29,7 +29,7 @@ class EccKeyPair {
     [[nodiscard]]
     Bytes public_key() const;
 
-    [[nodiscard, maybe_unused]]
+    [[nodiscard]]
     std::string public_key_hex() const;
 
     [[nodiscard]]

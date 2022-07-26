@@ -20,6 +20,7 @@
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <silkworm/rpc/server/server_context_pool.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 
 namespace silkworm::sentry::rlpx {
 
@@ -27,7 +28,9 @@ class Server final {
   public:
     Server(std::string host, uint16_t port);
 
-    boost::asio::awaitable<void> start(silkworm::rpc::ServerContextPool& context_pool);
+    boost::asio::awaitable<void> start(
+            silkworm::rpc::ServerContextPool& context_pool,
+            common::EccKeyPair node_key);
 
   private:
     std::string host_;

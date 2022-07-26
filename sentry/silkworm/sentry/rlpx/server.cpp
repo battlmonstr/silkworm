@@ -28,6 +28,7 @@
 #include <silkworm/common/log.hpp>
 #include <silkworm/sentry/common/socket.hpp>
 #include "peer.hpp"
+#include "../enode_url.hpp"
 
 namespace silkworm::sentry::rlpx {
 
@@ -35,7 +36,9 @@ using namespace boost::asio;
 
 Server::Server(std::string host, uint16_t port) : host_(std::move(host)), port_(port) {}
 
-awaitable<void> Server::start(silkworm::rpc::ServerContextPool& context_pool) {
+awaitable<void> Server::start(
+        silkworm::rpc::ServerContextPool& context_pool,
+        common::EccKeyPair node_key) {
     auto io_context = co_await this_coro::executor;
 
     ip::tcp::resolver resolver{io_context};
@@ -55,6 +58,9 @@ awaitable<void> Server::start(silkworm::rpc::ServerContextPool& context_pool) {
 
     acceptor.bind(endpoint);
     acceptor.listen();
+
+    EnodeUrl node_url{node_key.public_key_hex(), endpoint.address(), port_};
+    log::Info() << "RLPx server is listening at " << node_url.to_string();
 
     std::list<std::pair<std::unique_ptr<Peer>, awaitable<void>>> peers;
 
