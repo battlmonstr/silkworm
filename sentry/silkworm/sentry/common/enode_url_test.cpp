@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <catch2/catch.hpp>
 
-namespace silkworm::sentry {
+namespace silkworm::sentry::common {
 
 TEST_CASE("EnodeUrl") {
     EnodeUrl url1("enode://aa@1.2.3.4:5");

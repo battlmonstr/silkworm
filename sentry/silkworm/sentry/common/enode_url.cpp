@@ -19,7 +19,7 @@ limitations under the License.
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
-namespace silkworm::sentry {
+namespace silkworm::sentry::common {
 
 using namespace std;
 
@@ -56,4 +56,4 @@ string EnodeUrl::to_string() const {
 }
 
 
-}  // namespace silkworm::sentry
+}  // namespace silkworm::sentry::common

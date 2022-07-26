@@ -19,7 +19,7 @@ limitations under the License.
 #include <string>
 #include <boost/asio/ip/address.hpp>
 
-namespace silkworm::sentry {
+namespace silkworm::sentry::common {
 
 class EnodeUrl {
   public:
@@ -46,4 +46,4 @@ class EnodeUrl {
     uint16_t port_;
 };
 
-}  // namespace silkworm::sentry
+}  // namespace silkworm::sentry::common

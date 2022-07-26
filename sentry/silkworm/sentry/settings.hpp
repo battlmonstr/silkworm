@@ -24,7 +24,7 @@ limitations under the License.
 #include <silkworm/common/base.hpp>
 #include <silkworm/common/log.hpp>
 #include <silkworm/rpc/server/wait_strategy.hpp>
-#include "enode_url.hpp"
+#include <silkworm/sentry/common/enode_url.hpp>
 #include "nat_option.hpp"
 
 namespace silkworm::sentry {
@@ -48,7 +48,7 @@ struct Settings {
 
     std::optional<std::variant<std::filesystem::path, Bytes>> node_key;
 
-    std::vector<EnodeUrl> static_peers;
+    std::vector<common::EnodeUrl> static_peers;
 
     Settings();
 };
