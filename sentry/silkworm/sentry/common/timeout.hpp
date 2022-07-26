@@ -32,6 +32,11 @@ class Timeout {
     boost::asio::awaitable<void> schedule() const;
     boost::asio::awaitable<void> operator()() const { return schedule(); }
 
+    class ExpiredError : public std::runtime_error {
+      public:
+        ExpiredError() : std::runtime_error("Timeout has expired") {}
+    };
+
   private:
     std::chrono::milliseconds duration_;
 };

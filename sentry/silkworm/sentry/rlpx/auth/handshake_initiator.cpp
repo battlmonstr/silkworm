@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 #include "handshake_initiator.hpp"
-#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <silkworm/common/base.hpp>
+#include <silkworm/sentry/common/awaitable_wait_for_one.hpp>
 #include <silkworm/sentry/common/timeout.hpp>
 #include "auth_ack_message.hpp"
 #include "auth_message.hpp"
@@ -25,7 +25,7 @@ limitations under the License.
 namespace silkworm::sentry::rlpx::auth {
 
 using namespace std::chrono_literals;
-using namespace boost::asio::experimental::awaitable_operators;
+using namespace common::awaitable_wait_for_one;
 
 boost::asio::awaitable<void> HandshakeInitiator::execute(common::Socket& socket) {
     common::Timeout timeout(5s);
