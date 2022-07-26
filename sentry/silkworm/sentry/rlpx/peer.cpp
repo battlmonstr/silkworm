@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#pragma once
+#include "peer.hpp"
+#include "auth/handshake_initiator.hpp"
+#include "auth/handshake_recipient.hpp"
 
-#include <silkworm/concurrency/coroutine.hpp>
-#include <boost/asio/awaitable.hpp>
-#include <silkworm/sentry/common/socket.hpp>
+namespace silkworm::sentry::rlpx {
 
-namespace silkworm::sentry::rlpx::auth {
+boost::asio::awaitable<void> Peer::handle() {
+    auto handshake = is_initiator_
+        ? auth::HandshakeInitiator::execute(socket_)
+        : auth::HandshakeRecipient::execute(socket_);
+    co_await std::move(handshake);
+}
 
-class HandshakeInitiator {
-  public:
-    static boost::asio::awaitable<void> execute(common::Socket& socket);
-};
-
-}  // namespace silkworm::sentry::rlpx::auth
+}  // namespace silkworm::sentry::rlpx

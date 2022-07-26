@@ -25,12 +25,11 @@ class EccKeyPair {
   public:
     EccKeyPair();
     explicit EccKeyPair(Bytes data);
-    explicit EccKeyPair(ByteView data);
 
     [[nodiscard]]
     Bytes public_key() const;
 
-    [[nodiscard]]
+    [[nodiscard, maybe_unused]]
     std::string public_key_hex() const;
 
     [[nodiscard]]

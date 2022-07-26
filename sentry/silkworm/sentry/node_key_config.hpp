@@ -32,8 +32,12 @@ class NodeKeyConfig {
     explicit NodeKeyConfig(std::filesystem::path path);
     explicit NodeKeyConfig(const DataDirectory& data_dir);
 
+    [[nodiscard]]
     NodeKey load() const;
+
     void save(const NodeKey& key) const;
+
+    [[nodiscard]]
     bool exists() const;
 
   private:

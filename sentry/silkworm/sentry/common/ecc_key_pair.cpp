@@ -37,9 +37,6 @@ EccKeyPair::EccKeyPair(Bytes data) : private_key_(std::move(data)) {
     }
 }
 
-EccKeyPair::EccKeyPair(ByteView data) : EccKeyPair(Bytes(data)) {
-}
-
 Bytes EccKeyPair::public_key() const {
     SecP256K1Context ctx{/* allow_verify = */ false, /* allow_sign = */ true};
     secp256k1_pubkey public_key;

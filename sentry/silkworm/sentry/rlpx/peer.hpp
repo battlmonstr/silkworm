@@ -16,15 +16,27 @@ limitations under the License.
 
 #pragma once
 
+#include <memory>
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <silkworm/sentry/common/socket.hpp>
 
-namespace silkworm::sentry::rlpx::auth {
+namespace silkworm::sentry::rlpx {
 
-class HandshakeInitiator {
+class Peer {
   public:
-    static boost::asio::awaitable<void> execute(common::Socket& socket);
+    explicit Peer(common::Socket socket, bool is_initiator)
+        : socket_(std::move(socket)),
+          is_initiator_(is_initiator) {}
+
+    Peer(Peer&&) = default;
+    Peer& operator=(Peer&&) = default;
+
+    boost::asio::awaitable<void> handle();
+
+  private:
+    common::Socket socket_;
+    bool is_initiator_;
 };
 
-}  // namespace silkworm::sentry::rlpx::auth
+}  // namespace silkworm::sentry::rlpx

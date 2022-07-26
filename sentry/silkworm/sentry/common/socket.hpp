@@ -28,8 +28,8 @@ class Socket {
   public:
     explicit Socket(boost::asio::io_context& io_context) : socket_(io_context) {}
 
-    Socket(const Socket&) = delete;
-    Socket& operator=(const Socket&) = delete;
+    Socket(Socket&&) = default;
+    Socket& operator=(Socket&&) = default;
 
     [[nodiscard]]
     boost::asio::ip::tcp::socket& get() { return socket_; }

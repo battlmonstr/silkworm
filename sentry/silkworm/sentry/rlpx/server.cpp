@@ -17,13 +17,17 @@
 #include "server.hpp"
 
 #include <memory>
+#include <utility>
+#include <list>
 
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
 #include <silkworm/common/log.hpp>
 #include <silkworm/sentry/common/socket.hpp>
+#include "peer.hpp"
 
 namespace silkworm::sentry::rlpx {
 
@@ -52,9 +56,24 @@ awaitable<void> Server::start(silkworm::rpc::ServerContextPool& context_pool) {
     acceptor.bind(endpoint);
     acceptor.listen();
 
+    std::list<std::pair<std::unique_ptr<Peer>, awaitable<void>>> peers;
+
     while (acceptor.is_open()) {
-        auto socket = std::make_unique<common::Socket>(context_pool.next_io_context());
-        co_await acceptor.async_accept(socket->get(), use_awaitable);
+        auto& client_context = context_pool.next_io_context();
+        common::Socket socket{client_context};
+        co_await acceptor.async_accept(socket.get(), use_awaitable);
+
+        auto peer = std::make_unique<Peer>(std::move(socket), /* is_initiator = */ false);
+        auto handler = co_spawn(client_context, peer->handle(), use_awaitable);
+
+        peers.emplace_back(std::move(peer), std::move(handler));
+    }
+
+    while (!peers.empty()) {
+        auto& peer = peers.front();
+        // peer.first->disconnect();
+        co_await std::move(peer.second);
+        peers.pop_front();
     }
 }
 

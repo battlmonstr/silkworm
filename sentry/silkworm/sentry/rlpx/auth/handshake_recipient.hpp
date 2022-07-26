@@ -23,7 +23,8 @@ limitations under the License.
 namespace silkworm::sentry::rlpx::auth {
 
 class HandshakeRecipient {
-    boost::asio::awaitable<void> execute(common::Socket& socket);
+  public:
+    static boost::asio::awaitable<void> execute(common::Socket& socket);
 };
 
 }  // namespace silkworm::sentry::rlpx::auth
