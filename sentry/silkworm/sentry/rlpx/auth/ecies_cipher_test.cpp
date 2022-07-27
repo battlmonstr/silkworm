@@ -24,8 +24,7 @@ TEST_CASE("EciesCipher.encrypt_decrypt_message") {
     common::EccKeyPair receiver_key;
 
     Bytes expected_plain_text = {1, 2, 3, 4, 5};
-    EciesCipher::PublicKey public_key = receiver_key.public_key();
-    auto message = EciesCipher::encrypt_message(expected_plain_text, public_key);
+    auto message = EciesCipher::encrypt_message(expected_plain_text, receiver_key.public_key());
     CHECK_FALSE(message.ephemeral_public_key.empty());
     CHECK_FALSE(message.iv.empty());
     CHECK_FALSE(message.cipher_text.empty());
@@ -42,7 +41,6 @@ TEST_CASE("EciesCipher.encrypt_decrypt_bytes") {
     common::EccKeyPair receiver_key;
 
     Bytes expected_plain_text = {1, 2, 3, 4, 5};
-    EciesCipher::PublicKey public_key = receiver_key.public_key();
     auto cipher_text = EciesCipher::encrypt(expected_plain_text, receiver_key.public_key());
     CHECK_FALSE(cipher_text.empty());
     CHECK(cipher_text != expected_plain_text);

@@ -30,6 +30,12 @@ class EccKeyPair {
     Bytes public_key() const;
 
     [[nodiscard]]
+    Bytes public_key_serialized_std() const;
+
+    [[nodiscard]]
+    Bytes public_key_serialized() const;
+
+    [[nodiscard]]
     std::string public_key_hex() const;
 
     [[nodiscard]]

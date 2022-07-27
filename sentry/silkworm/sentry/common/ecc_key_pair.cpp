@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include "ecc_key_pair.hpp"
+#include <algorithm>
 #include <array>
 #include <silkworm/sentry/common/random.hpp>
 #include <silkworm/common/util.hpp>
@@ -47,8 +48,24 @@ Bytes EccKeyPair::public_key() const {
     return {public_key.data, sizeof(public_key.data)};
 }
 
+Bytes EccKeyPair::public_key_serialized_std() const {
+    Bytes data = public_key();
+    secp256k1_pubkey public_key;
+    memcpy(public_key.data, data.data(), sizeof(public_key.data));
+
+    SecP256K1Context ctx;
+    return ctx.serialize_public_key(&public_key, /* is_compressed = */ false);
+}
+
+Bytes EccKeyPair::public_key_serialized() const {
+    Bytes data = public_key_serialized_std();
+    std::copy(data.cbegin() + 1, data.cend(), data.begin());
+    data.pop_back();
+    return data;
+}
+
 std::string EccKeyPair::public_key_hex() const {
-    return ::silkworm::to_hex(public_key());
+    return ::silkworm::to_hex(public_key_serialized());
 }
 
 std::string EccKeyPair::private_key_hex() const {
