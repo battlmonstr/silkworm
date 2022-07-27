@@ -69,6 +69,9 @@ awaitable<void> Server::start(
         common::Socket socket{client_context};
         co_await acceptor.async_accept(socket.get(), use_awaitable);
 
+        // TODO: log connections
+        log::Debug() << "RLPx server client connected";
+
         auto peer = std::make_unique<Peer>(std::move(socket), /* is_initiator = */ false);
         auto handler = co_spawn(client_context, peer->handle(), use_awaitable);
 

@@ -15,16 +15,24 @@ limitations under the License.
 */
 
 #include "peer.hpp"
+#include <silkworm/common/log.hpp>
 #include "auth/handshake_initiator.hpp"
 #include "auth/handshake_recipient.hpp"
 
 namespace silkworm::sentry::rlpx {
 
 boost::asio::awaitable<void> Peer::handle() {
-    auto handshake = is_initiator_
-        ? auth::HandshakeInitiator::execute(socket_)
-        : auth::HandshakeRecipient::execute(socket_);
-    co_await std::move(handshake);
+    try {
+        log::Debug() << "Peer::handle";
+
+        auto handshake = is_initiator_
+            ? auth::HandshakeInitiator::execute(socket_)
+            : auth::HandshakeRecipient::execute(socket_);
+        co_await std::move(handshake);
+    } catch (const std::exception& ex) {
+        log::Error() << "Peer::handle error: " << ex.what();
+        throw;
+    }
 }
 
 }  // namespace silkworm::sentry::rlpx
