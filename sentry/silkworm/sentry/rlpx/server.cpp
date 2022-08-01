@@ -16,6 +16,7 @@
 
 #include "server.hpp"
 
+#include <future>
 #include <memory>
 #include <utility>
 #include <list>
@@ -24,6 +25,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/use_future.hpp>
 
 #include <silkworm/common/log.hpp>
 #include <silkworm/sentry/common/enode_url.hpp>
@@ -62,7 +64,7 @@ awaitable<void> Server::start(
     common::EnodeUrl node_url{node_key.public_key_hex(), endpoint.address(), port_};
     log::Info() << "RLPx server is listening at " << node_url.to_string();
 
-    std::list<std::pair<std::unique_ptr<Peer>, awaitable<void>>> peers;
+    std::list<std::pair<std::unique_ptr<Peer>, std::future<void>>> peers;
 
     while (acceptor.is_open()) {
         auto& client_context = context_pool.next_io_context();
@@ -73,7 +75,7 @@ awaitable<void> Server::start(
         log::Debug() << "RLPx server client connected";
 
         auto peer = std::make_unique<Peer>(std::move(socket), /* is_initiator = */ false);
-        auto handler = co_spawn(client_context, peer->handle(), use_awaitable);
+        auto handler = co_spawn(client_context, peer->handle(), use_future);
 
         peers.emplace_back(std::move(peer), std::move(handler));
     }
@@ -81,7 +83,7 @@ awaitable<void> Server::start(
     while (!peers.empty()) {
         auto& peer = peers.front();
         // peer.first->disconnect();
-        co_await std::move(peer.second);
+        peer.second.wait();
         peers.pop_front();
     }
 }
