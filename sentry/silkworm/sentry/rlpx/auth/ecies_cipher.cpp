@@ -85,6 +85,10 @@ Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateK
     return aes_decrypt(message.cipher_text, aes_key, message.iv);
 }
 
+size_t EciesCipher::round_up_to_block_size(size_t size) {
+    return (size + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE * AES_BLOCK_SIZE;
+}
+
 static Bytes aes_encrypt(ByteView plain_text, ByteView key, ByteView iv) {
     assert(key.size() == kKeySize);
     assert(iv.size() == AES_BLOCK_SIZE);

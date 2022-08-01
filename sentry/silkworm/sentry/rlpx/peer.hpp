@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <silkworm/sentry/common/socket.hpp>
@@ -25,9 +26,13 @@ namespace silkworm::sentry::rlpx {
 
 class Peer {
   public:
-    explicit Peer(common::Socket socket, bool is_initiator)
+    explicit Peer(
+            common::Socket socket,
+            std::optional<Bytes> initiator_public_key,
+            Bytes recipient_public_key)
         : socket_(std::move(socket)),
-          is_initiator_(is_initiator) {}
+          initiator_public_key_(std::move(initiator_public_key)),
+          recipient_public_key_(std::move(recipient_public_key)) {}
 
     Peer(Peer&&) = default;
     Peer& operator=(Peer&&) = default;
@@ -36,7 +41,8 @@ class Peer {
 
   private:
     common::Socket socket_;
-    bool is_initiator_;
+    std::optional<Bytes> initiator_public_key_;
+    Bytes recipient_public_key_;
 };
 
 }  // namespace silkworm::sentry::rlpx

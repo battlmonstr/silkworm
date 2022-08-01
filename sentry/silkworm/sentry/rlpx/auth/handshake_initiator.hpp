@@ -24,7 +24,15 @@ namespace silkworm::sentry::rlpx::auth {
 
 class HandshakeInitiator {
   public:
-    static boost::asio::awaitable<void> execute(common::Socket& socket);
+    HandshakeInitiator(Bytes initiator_public_key, Bytes recipient_public_key)
+        : initiator_public_key_(std::move(initiator_public_key)),
+          recipient_public_key_(std::move(recipient_public_key)) {}
+
+    boost::asio::awaitable<void> execute(common::Socket& socket);
+
+  private:
+    Bytes initiator_public_key_;
+    Bytes recipient_public_key_;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth

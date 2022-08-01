@@ -74,7 +74,11 @@ awaitable<void> Server::start(
         auto remote_endpoint = socket.get().remote_endpoint();
         log::Debug() << "RLPx server client connected from " << remote_endpoint.address().to_string() << ":" << remote_endpoint.port();
 
-        auto peer = std::make_unique<Peer>(std::move(socket), /* is_initiator = */ false);
+        auto recipient_public_key = node_key.public_key();
+        auto peer = std::make_unique<Peer>(
+                std::move(socket),
+                /* initiator_public_key */ std::nullopt,
+                std::move(recipient_public_key));
         auto handler = co_spawn(client_context, peer->handle(), use_future);
 
         peers.emplace_back(std::move(peer), std::move(handler));

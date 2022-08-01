@@ -27,9 +27,14 @@ boost::asio::awaitable<void> Peer::handle() {
     try {
         log::Debug() << "Peer::handle";
 
-        auto handshake = is_initiator_
-            ? auth::HandshakeInitiator::execute(socket_)
-            : auth::HandshakeRecipient::execute(socket_);
+        boost::asio::awaitable<void> handshake;
+        if (initiator_public_key_) {
+            auth::HandshakeInitiator handshake_initiator{initiator_public_key_.value(), recipient_public_key_};
+            handshake = handshake_initiator.execute(socket_);
+        } else {
+            handshake = auth::HandshakeRecipient::execute(socket_);
+        }
+
         co_await std::move(handshake);
     } catch (const boost::system::system_error &ex) {
         if (ex.code() == boost::asio::error::eof) {

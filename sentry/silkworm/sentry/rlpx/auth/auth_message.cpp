@@ -15,20 +15,64 @@ limitations under the License.
 */
 
 #include "auth_message.hpp"
+#include <algorithm>
+#include <functional>
+#include <silkworm/common/endian.hpp>
+#include <silkworm/common/secp256k1_context.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/random.hpp>
+#include "ecies_cipher.hpp"
 
 namespace silkworm::sentry::rlpx::auth {
 
-AuthMessage::AuthMessage() : nonce_(common::random_bytes(32)) {
+static Bytes sign(ByteView data, ByteView private_key) {
+    SecP256K1Context ctx{/* allow_verify = */ false, /* allow_sign = */ true};
+    secp256k1_ecdsa_signature signature;
+    bool ok = ctx.sign(&signature, data, private_key);
+    if (!ok) {
+        throw std::runtime_error("Failed to sign an AuthMessage");
+    }
+
+    return ctx.serialize_signature(&signature);
+}
+
+AuthMessage::AuthMessage(Bytes initiator_public_key, Bytes recipient_public_key) {
+    initiator_public_key_ = std::move(initiator_public_key);
+    recipient_public_key_ = std::move(recipient_public_key);
+
+    common::EccKeyPair ephemeral_key_pair;
+    Bytes shared_secret = EciesCipher::compute_shared_secret(recipient_public_key_, ephemeral_key_pair.private_key());
+
+    nonce_ = common::random_bytes(shared_secret.size());
+
+    // shared_secret ^= nonce_
+    std::transform(shared_secret.cbegin(), shared_secret.cend(), nonce_.cbegin(), shared_secret.begin(), std::bit_xor<>{});
+    signature_ = sign(shared_secret, ephemeral_key_pair.private_key());
 }
 
 AuthMessage::AuthMessage(ByteView) {
     // TODO
 }
 
-Bytes AuthMessage::serialize() const {
+Bytes AuthMessage::body_as_rlp() const {
     // TODO
+    // rlp::encode(signature_, initiator_public_key_.public_key_serialized(), nonce_, version);
     return Bytes();
+}
+
+Bytes AuthMessage::body_encrypted() const {
+    Bytes body = body_as_rlp();
+    body.resize(EciesCipher::round_up_to_block_size(body.size()));
+    return EciesCipher::encrypt(body, recipient_public_key_);
+}
+
+Bytes AuthMessage::serialize() const {
+    Bytes body = body_encrypted();
+
+    Bytes size(sizeof(uint16_t), 0);
+    endian::store_big_u16(size.data(), static_cast<uint16_t>(body.size()));
+
+    return size + body;
 }
 
 }  // namespace silkworm::sentry::rlpx::auth

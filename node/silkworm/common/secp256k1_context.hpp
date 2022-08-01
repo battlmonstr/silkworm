@@ -65,6 +65,16 @@ class SecP256K1Context final {
         return silkpre_secp256k1_ecdh(context_, shared_secret.data(), public_key, private_key.data());
     }
 
+    bool sign(secp256k1_ecdsa_signature* signature, ByteView data, ByteView private_key) {
+        return secp256k1_ecdsa_sign(context_, signature, data.data(), private_key.data(), nullptr, nullptr);
+    }
+
+    Bytes serialize_signature(const secp256k1_ecdsa_signature* signature) {
+        Bytes data(64, 0);
+        secp256k1_ecdsa_signature_serialize_compact(context_, data.data(), signature);
+        return data;
+    }
+
   private:
     static unsigned int flags(bool allow_verify, bool allow_sign) {
         unsigned int value = SECP256K1_CONTEXT_NONE;
