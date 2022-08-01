@@ -39,6 +39,8 @@ class EciesCipher {
     static Bytes encrypt(ByteView plain_text, PublicKeyView public_key);
     static Bytes decrypt(ByteView message_data, PrivateKeyView private_key);
 
+    static Bytes compute_shared_secret(PublicKeyView public_key, PrivateKeyView private_key);
+
   private:
     static Bytes serialize_message(const Message& message);
     static Message deserialize_message(ByteView message_data);

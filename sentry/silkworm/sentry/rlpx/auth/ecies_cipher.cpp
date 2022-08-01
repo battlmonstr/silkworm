@@ -37,21 +37,25 @@ static Bytes aes_decrypt(ByteView cipher_text, ByteView key, ByteView iv);
 static Bytes sha256(ByteView data);
 static Bytes hmac(ByteView key, ByteView data1, ByteView data2);
 
-EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKeyView public_key_view) {
+Bytes EciesCipher::compute_shared_secret(PublicKeyView public_key_view, PrivateKeyView private_key) {
     secp256k1_pubkey public_key;
     assert(public_key_view.size() == sizeof(public_key.data));
     memcpy(public_key.data, public_key_view.data(), sizeof(public_key.data));
 
-    common::EccKeyPair ephemeral_key_pair;
-
     Bytes shared_secret(kKeySize * 2, 0);
     SecP256K1Context ctx;
-    auto ephemeral_private_key = ephemeral_key_pair.private_key();
-    bool ok = ctx.compute_ecdh_secret(shared_secret, &public_key, ephemeral_private_key);
+    bool ok = ctx.compute_ecdh_secret(shared_secret, &public_key, private_key);
     if (!ok) {
-        throw std::runtime_error("Failed to ECDH-agree public key and ephemeral private key");
+        throw std::runtime_error("Failed to ECDH-agree public and private key");
     }
 
+    return shared_secret;
+}
+
+EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKeyView public_key_view) {
+    common::EccKeyPair ephemeral_key_pair;
+
+    Bytes shared_secret = compute_shared_secret(public_key_view, ephemeral_key_pair.private_key());
     ByteView aes_key(shared_secret.data(), kKeySize);
     ByteView mac_key(&shared_secret[kKeySize], kKeySize);
 
@@ -69,17 +73,7 @@ EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKey
 }
 
 Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateKeyView private_key) {
-    secp256k1_pubkey ephemeral_public_key;
-    assert(message.ephemeral_public_key.size() == sizeof(ephemeral_public_key.data));
-    memcpy(ephemeral_public_key.data, message.ephemeral_public_key.data(), sizeof(ephemeral_public_key.data));
-
-    Bytes shared_secret(kKeySize * 2, 0);
-    SecP256K1Context ctx;
-    bool ok = ctx.compute_ecdh_secret(shared_secret, &ephemeral_public_key, private_key);
-    if (!ok) {
-        throw std::runtime_error("Failed to ECDH-agree private key and ephemeral public key");
-    }
-
+    Bytes shared_secret = compute_shared_secret(message.ephemeral_public_key, private_key);
     ByteView aes_key(shared_secret.data(), kKeySize);
     ByteView mac_key(&shared_secret[kKeySize], kKeySize);
 
