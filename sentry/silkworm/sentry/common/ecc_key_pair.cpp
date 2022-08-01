@@ -30,7 +30,7 @@ EccKeyPair::EccKeyPair() {
     } while (!ctx.verify_private_key_data(private_key_));
 }
 
-EccKeyPair::EccKeyPair(Bytes data) : private_key_(std::move(data)) {
+EccKeyPair::EccKeyPair(Bytes private_key_data) : private_key_(std::move(private_key_data)) {
     SecP256K1Context ctx;
 
     if (!ctx.verify_private_key_data(private_key_)) {

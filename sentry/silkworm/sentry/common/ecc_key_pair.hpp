@@ -24,7 +24,7 @@ namespace silkworm::sentry::common {
 class EccKeyPair {
   public:
     EccKeyPair();
-    explicit EccKeyPair(Bytes data);
+    explicit EccKeyPair(Bytes private_key_data);
 
     [[nodiscard]]
     Bytes public_key() const;
