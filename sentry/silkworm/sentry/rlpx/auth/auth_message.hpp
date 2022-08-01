@@ -22,11 +22,14 @@ namespace silkworm::sentry::rlpx::auth {
 
 class AuthMessage {
   public:
-    AuthMessage() = default;
+    AuthMessage();
     explicit AuthMessage(ByteView data);
 
     [[nodiscard]]
     Bytes serialize() const;
+
+  private:
+    Bytes nonce_;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth

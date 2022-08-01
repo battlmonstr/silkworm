@@ -15,8 +15,12 @@ limitations under the License.
 */
 
 #include "auth_ack_message.hpp"
+#include <silkworm/sentry/common/random.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
+
+AuthAckMessage::AuthAckMessage() : nonce_(common::random_bytes(32)) {
+}
 
 AuthAckMessage::AuthAckMessage(ByteView) {
     // TODO
