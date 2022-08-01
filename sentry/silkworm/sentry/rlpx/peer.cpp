@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 #include "peer.hpp"
+#include <boost/asio/error.hpp>
+#include <boost/system/system_error.hpp>
 #include <silkworm/common/log.hpp>
 #include "auth/handshake_initiator.hpp"
 #include "auth/handshake_recipient.hpp"
@@ -29,8 +31,16 @@ boost::asio::awaitable<void> Peer::handle() {
             ? auth::HandshakeInitiator::execute(socket_)
             : auth::HandshakeRecipient::execute(socket_);
         co_await std::move(handshake);
+    } catch (const boost::system::system_error &ex) {
+        if (ex.code() == boost::asio::error::eof) {
+            // TODO: handle disconnect
+            log::Debug() << "Peer::handle EOF";
+            co_return;
+        }
+        log::Error() << "Peer::handle system_error: " << ex.what();
+        throw;
     } catch (const std::exception& ex) {
-        log::Error() << "Peer::handle error: " << ex.what();
+        log::Error() << "Peer::handle exception: " << ex.what();
         throw;
     }
 }
