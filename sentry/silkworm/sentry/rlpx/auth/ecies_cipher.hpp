@@ -17,13 +17,14 @@ limitations under the License.
 #pragma once
 
 #include <silkworm/common/base.hpp>
+#include <silkworm/sentry/common/ecc_public_key.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
 class EciesCipher {
   public:
-    using PublicKey = Bytes;
-    using PublicKeyView = ByteView;
+    using PublicKey = common::EccPublicKey;
+    using PublicKeyView = const PublicKey&;
     using PrivateKeyView = ByteView;
 
     struct Message {

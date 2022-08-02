@@ -40,7 +40,7 @@ static Bytes hmac(ByteView key, ByteView data1, ByteView data2);
 Bytes EciesCipher::compute_shared_secret(PublicKeyView public_key_view, PrivateKeyView private_key) {
     secp256k1_pubkey public_key;
     assert(public_key_view.size() == sizeof(public_key.data));
-    memcpy(public_key.data, public_key_view.data(), sizeof(public_key.data));
+    memcpy(public_key.data, public_key_view.data().data(), sizeof(public_key.data));
 
     Bytes shared_secret(kKeySize * 2, 0);
     SecP256K1Context ctx;
@@ -162,7 +162,7 @@ static Bytes hmac(ByteView key, ByteView data1, ByteView data2) {
 Bytes EciesCipher::serialize_message(const Message& message) {
     secp256k1_pubkey public_key;
     assert(message.ephemeral_public_key.size() == sizeof(public_key.data));
-    memcpy(public_key.data, message.ephemeral_public_key.data(), sizeof(public_key.data));
+    memcpy(public_key.data, message.ephemeral_public_key.data().data(), sizeof(public_key.data));
 
     SecP256K1Context ctx;
     Bytes key_data = ctx.serialize_public_key(&public_key, /* is_compressed = */ false);
@@ -201,7 +201,7 @@ EciesCipher::Message EciesCipher::deserialize_message(ByteView message_data) {
     if (!ok) {
         throw std::runtime_error("Failed to parse an ephemeral public key");
     }
-    Bytes ephemeral_public_key{public_key.data, sizeof(public_key.data)};
+    common::EccPublicKey ephemeral_public_key{{public_key.data, sizeof(public_key.data)}};
 
     return {
         std::move(ephemeral_public_key),

@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <string>
 #include <silkworm/common/base.hpp>
+#include "ecc_public_key.hpp"
 
 namespace silkworm::sentry::common {
 
@@ -27,16 +28,7 @@ class EccKeyPair {
     explicit EccKeyPair(Bytes private_key_data);
 
     [[nodiscard]]
-    Bytes public_key() const;
-
-    [[nodiscard]]
-    Bytes public_key_serialized_std() const;
-
-    [[nodiscard]]
-    Bytes public_key_serialized() const;
-
-    [[nodiscard]]
-    std::string public_key_hex() const;
+    EccPublicKey public_key() const;
 
     [[nodiscard]]
     ByteView private_key() const { return private_key_; }

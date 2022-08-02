@@ -36,9 +36,9 @@ static Bytes sign(ByteView data, ByteView private_key) {
     return ctx.serialize_signature(&signature);
 }
 
-AuthMessage::AuthMessage(Bytes initiator_public_key, Bytes recipient_public_key) {
-    initiator_public_key_ = std::move(initiator_public_key);
-    recipient_public_key_ = std::move(recipient_public_key);
+AuthMessage::AuthMessage(common::EccPublicKey initiator_public_key, common::EccPublicKey recipient_public_key)
+    : initiator_public_key_(std::move(initiator_public_key)),
+      recipient_public_key_(std::move(recipient_public_key)) {
 
     common::EccKeyPair ephemeral_key_pair;
     Bytes shared_secret = EciesCipher::compute_shared_secret(recipient_public_key_, ephemeral_key_pair.private_key());
@@ -50,13 +50,15 @@ AuthMessage::AuthMessage(Bytes initiator_public_key, Bytes recipient_public_key)
     signature_ = sign(shared_secret, ephemeral_key_pair.private_key());
 }
 
-AuthMessage::AuthMessage(ByteView) {
+AuthMessage::AuthMessage(ByteView)
+    : initiator_public_key_({{}}),
+      recipient_public_key_({{}}) {
     // TODO
 }
 
 Bytes AuthMessage::body_as_rlp() const {
     // TODO
-    // rlp::encode(signature_, initiator_public_key_.public_key_serialized(), nonce_, version);
+    // rlp::encode(signature_, initiator_public_key_.serialized(), nonce_, version);
     return Bytes();
 }
 

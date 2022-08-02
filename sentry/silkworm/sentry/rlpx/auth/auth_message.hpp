@@ -17,12 +17,13 @@ limitations under the License.
 #pragma once
 
 #include <silkworm/common/base.hpp>
+#include <silkworm/sentry/common/ecc_public_key.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
 class AuthMessage {
   public:
-    AuthMessage(Bytes initiator_public_key, Bytes recipient_public_key);
+    AuthMessage(common::EccPublicKey initiator_public_key, common::EccPublicKey recipient_public_key);
     explicit AuthMessage(ByteView data);
 
     [[nodiscard]]
@@ -34,8 +35,8 @@ class AuthMessage {
     [[nodiscard]]
     Bytes body_encrypted() const;
 
-    Bytes initiator_public_key_;
-    Bytes recipient_public_key_;
+    common::EccPublicKey initiator_public_key_;
+    common::EccPublicKey recipient_public_key_;
     Bytes nonce_;
     Bytes signature_;
     static const int version = 4;

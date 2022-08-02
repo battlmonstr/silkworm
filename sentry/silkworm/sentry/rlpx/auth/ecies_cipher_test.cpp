@@ -25,7 +25,7 @@ TEST_CASE("EciesCipher.encrypt_decrypt_message") {
 
     Bytes expected_plain_text = {1, 2, 3, 4, 5};
     auto message = EciesCipher::encrypt_message(expected_plain_text, receiver_key.public_key());
-    CHECK_FALSE(message.ephemeral_public_key.empty());
+    CHECK(message.ephemeral_public_key.size() > 0);
     CHECK_FALSE(message.iv.empty());
     CHECK_FALSE(message.cipher_text.empty());
     CHECK_FALSE(message.mac.empty());

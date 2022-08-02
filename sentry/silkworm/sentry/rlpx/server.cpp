@@ -61,7 +61,7 @@ awaitable<void> Server::start(
     acceptor.bind(endpoint);
     acceptor.listen();
 
-    common::EnodeUrl node_url{node_key.public_key_hex(), endpoint.address(), port_};
+    common::EnodeUrl node_url{node_key.public_key().hex(), endpoint.address(), port_};
     log::Info() << "RLPx server is listening at " << node_url.to_string();
 
     std::list<std::pair<std::unique_ptr<Peer>, std::future<void>>> peers;
