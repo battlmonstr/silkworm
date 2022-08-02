@@ -19,6 +19,7 @@ limitations under the License.
 #include <functional>
 #include <silkworm/common/endian.hpp>
 #include <silkworm/common/secp256k1_context.hpp>
+#include <silkworm/rlp/encode_vector.hpp>
 #include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/random.hpp>
 #include "ecies_cipher.hpp"
@@ -57,9 +58,9 @@ AuthMessage::AuthMessage(ByteView)
 }
 
 Bytes AuthMessage::body_as_rlp() const {
-    // TODO
-    // rlp::encode(signature_, initiator_public_key_.serialized(), nonce_, version);
-    return Bytes();
+    Bytes data;
+    rlp::encode(data, signature_, initiator_public_key_.serialized(), nonce_, version);
+    return data;
 }
 
 Bytes AuthMessage::body_encrypted() const {

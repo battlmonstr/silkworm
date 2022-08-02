@@ -39,7 +39,7 @@ class AuthMessage {
     common::EccPublicKey recipient_public_key_;
     Bytes nonce_;
     Bytes signature_;
-    static const int version = 4;
+    static const uint8_t version = 4;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth
