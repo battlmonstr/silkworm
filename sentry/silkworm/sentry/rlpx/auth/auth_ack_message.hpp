@@ -47,7 +47,7 @@ class AuthAckMessage {
     common::EccPublicKey initiator_public_key_;
     common::EccPublicKey ephemeral_public_key_;
     Bytes nonce_;
-    static const uint8_t version = 4;
+    static const uint8_t version;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth

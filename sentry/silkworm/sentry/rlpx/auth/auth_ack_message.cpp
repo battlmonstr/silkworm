@@ -22,6 +22,8 @@ limitations under the License.
 
 namespace silkworm::sentry::rlpx::auth {
 
+const uint8_t AuthAckMessage::version = 4;
+
 AuthAckMessage::AuthAckMessage(
     common::EccPublicKey initiator_public_key,
     common::EccPublicKey ephemeral_public_key)

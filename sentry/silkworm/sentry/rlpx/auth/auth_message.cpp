@@ -62,6 +62,8 @@ static common::EccPublicKey recover_and_verify(ByteView data, ByteView signature
     return common::EccPublicKey{Bytes{public_key.data, sizeof(public_key.data)}};
 }
 
+const uint8_t AuthMessage::version = 4;
+
 AuthMessage::AuthMessage(
     const common::EccKeyPair& initiator_key_pair,
     common::EccPublicKey recipient_public_key,
