@@ -28,7 +28,7 @@ namespace silkworm::sentry::rlpx::auth {
 using namespace std::chrono_literals;
 using namespace common::awaitable_wait_for_one;
 
-boost::asio::awaitable<void> AuthInitiator::execute(common::Socket& socket) {
+boost::asio::awaitable<AuthSession> AuthInitiator::execute(common::Socket& socket) {
     common::Timeout timeout(5s);
 
     AuthMessage auth_message{initiator_key_pair_, recipient_public_key_, initiator_ephemeral_key_pair_};
@@ -36,6 +36,12 @@ boost::asio::awaitable<void> AuthInitiator::execute(common::Socket& socket) {
 
     Bytes auth_ack_message_data = std::get<Bytes>(co_await (socket.receive() || timeout()));
     AuthAckMessage auth_ack_message(auth_ack_message_data);
+
+    co_return AuthSession{
+        recipient_public_key_,
+        auth_ack_message.ephemeral_public_key(),
+        initiator_ephemeral_key_pair_,
+    };
 }
 
 }  // namespace silkworm::sentry::rlpx::auth

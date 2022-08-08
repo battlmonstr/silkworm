@@ -21,6 +21,7 @@ limitations under the License.
 #include <silkworm/sentry/common/socket.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
 #include <silkworm/sentry/common/ecc_key_pair.hpp>
+#include "auth_session.hpp"
 
 namespace silkworm::sentry::rlpx::auth {
 
@@ -30,7 +31,7 @@ class AuthInitiator {
         : initiator_key_pair_(std::move(initiator_key_pair)),
           recipient_public_key_(std::move(recipient_public_key)) {}
 
-    boost::asio::awaitable<void> execute(common::Socket& socket);
+    boost::asio::awaitable<AuthSession> execute(common::Socket& socket);
 
   private:
     common::EccKeyPair initiator_key_pair_;

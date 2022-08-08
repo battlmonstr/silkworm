@@ -30,6 +30,10 @@ class AuthAckMessage {
 
     [[nodiscard]] Bytes serialize() const;
 
+    [[nodiscard]] const common::EccPublicKey& ephemeral_public_key() const {
+        return ephemeral_public_key_;
+    }
+
   private:
     [[nodiscard]] Bytes body_as_rlp() const;
     [[nodiscard]] Bytes body_encrypted() const;

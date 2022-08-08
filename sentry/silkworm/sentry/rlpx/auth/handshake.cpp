@@ -15,6 +15,7 @@
 
 #include "handshake.hpp"
 
+#include <silkworm/common/log.hpp>
 #include <silkworm/sentry/common/awaitable_wait_for_one.hpp>
 #include <silkworm/sentry/common/timeout.hpp>
 
@@ -28,7 +29,7 @@ using namespace std::chrono_literals;
 using namespace common::awaitable_wait_for_one;
 
 boost::asio::awaitable<void> Handshake::execute(common::Socket& socket) {
-    boost::asio::awaitable<void> auth_handshake;
+    boost::asio::awaitable<AuthSession> auth_handshake;
     if (peer_public_key_) {
         auth::AuthInitiator auth_initiator{node_key_, peer_public_key_.value()};
         auth_handshake = auth_initiator.execute(socket);
@@ -36,7 +37,8 @@ boost::asio::awaitable<void> Handshake::execute(common::Socket& socket) {
         auth::AuthRecipient auth_recipient{node_key_};
         auth_handshake = auth_recipient.execute(socket);
     }
-    co_await std::move(auth_handshake);
+    auto session = co_await std::move(auth_handshake);
+    log::Debug() << "AuthSession.peer_ephemeral_public_key: " << session.peer_ephemeral_public_key.hex();
 
     // TODO: Hello message exchange
     common::Timeout timeout(5s);
