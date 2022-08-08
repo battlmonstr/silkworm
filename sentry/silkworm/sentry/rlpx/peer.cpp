@@ -18,8 +18,7 @@ limitations under the License.
 #include <boost/asio/error.hpp>
 #include <boost/system/system_error.hpp>
 #include <silkworm/common/log.hpp>
-#include "auth/handshake_initiator.hpp"
-#include "auth/handshake_recipient.hpp"
+#include "auth/handshake.hpp"
 
 namespace silkworm::sentry::rlpx {
 
@@ -27,16 +26,9 @@ boost::asio::awaitable<void> Peer::handle() {
     try {
         log::Debug() << "Peer::handle";
 
-        boost::asio::awaitable<void> handshake;
-        if (peer_public_key_) {
-            auth::HandshakeInitiator handshake_initiator{node_key_, peer_public_key_.value()};
-            handshake = handshake_initiator.execute(socket_);
-        } else {
-            auth::HandshakeRecipient handshake_recipient{node_key_};
-            handshake = handshake_recipient.execute(socket_);
-        }
+        auth::Handshake handshake{node_key_, peer_public_key_};
+        co_await handshake.execute(socket_);
 
-        co_await std::move(handshake);
     } catch (const boost::system::system_error &ex) {
         if (ex.code() == boost::asio::error::eof) {
             // TODO: handle disconnect

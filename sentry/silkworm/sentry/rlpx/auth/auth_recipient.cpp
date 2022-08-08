@@ -14,25 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#pragma once
+#include "auth_recipient.hpp"
 
-#include <silkworm/concurrency/coroutine.hpp>
-#include <boost/asio/awaitable.hpp>
 #include <silkworm/common/base.hpp>
-#include <silkworm/sentry/common/ecc_key_pair.hpp>
-#include <silkworm/sentry/common/socket.hpp>
+#include <silkworm/sentry/common/awaitable_wait_for_one.hpp>
+#include <silkworm/sentry/common/timeout.hpp>
+
+#include "auth_ack_message.hpp"
+#include "auth_message.hpp"
 
 namespace silkworm::sentry::rlpx::auth {
 
-class HandshakeRecipient {
-  public:
-    explicit HandshakeRecipient(common::EccKeyPair recipient_key_pair)
-        : recipient_key_pair_(std::move(recipient_key_pair)) {}
+using namespace std::chrono_literals;
+using namespace common::awaitable_wait_for_one;
 
-    boost::asio::awaitable<void> execute(common::Socket& socket);
+boost::asio::awaitable<void> AuthRecipient::execute(common::Socket& socket) {
+    common::Timeout timeout(5s);
 
-  private:
-    common::EccKeyPair recipient_key_pair_;
-};
+    Bytes auth_message_data = std::get<Bytes>(co_await (socket.receive() || timeout()));
+    AuthMessage auth_message(auth_message_data, recipient_key_pair_);
+
+    AuthAckMessage auth_ack_message;
+    co_await (socket.send(auth_ack_message.serialize()) || timeout());
+}
 
 }  // namespace silkworm::sentry::rlpx::auth
