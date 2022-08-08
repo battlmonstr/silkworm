@@ -17,19 +17,27 @@ limitations under the License.
 #pragma once
 
 #include <silkworm/common/base.hpp>
+#include <silkworm/sentry/common/ecc_public_key.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
 class AuthAckMessage {
   public:
-    AuthAckMessage();
+    AuthAckMessage(
+        common::EccPublicKey initiator_public_key,
+        common::EccPublicKey ephemeral_public_key);
     explicit AuthAckMessage(ByteView data);
 
-    [[nodiscard]]
-    Bytes serialize() const;
+    [[nodiscard]] Bytes serialize() const;
 
   private:
+    [[nodiscard]] Bytes body_as_rlp() const;
+    [[nodiscard]] Bytes body_encrypted() const;
+
+    common::EccPublicKey initiator_public_key_;
+    common::EccPublicKey ephemeral_public_key_;
     Bytes nonce_;
+    static const uint8_t version = 4;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth

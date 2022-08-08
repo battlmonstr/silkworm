@@ -30,18 +30,20 @@ class AuthMessage {
         const common::EccKeyPair& ephemeral_key_pair);
     AuthMessage(ByteView data, const common::EccKeyPair& recipient_key_pair);
 
-    [[nodiscard]]
-    Bytes serialize() const;
+    [[nodiscard]] Bytes serialize() const;
 
-    [[nodiscard]]
-    const common::EccPublicKey& ephemeral_public_key() const { return ephemeral_public_key_; }
+    [[nodiscard]] const common::EccPublicKey& initiator_public_key() const {
+        return initiator_public_key_;
+    }
+
+    [[nodiscard]] const common::EccPublicKey& ephemeral_public_key() const {
+        return ephemeral_public_key_;
+    }
 
   private:
-    [[nodiscard]]
-    Bytes body_as_rlp() const;
+    [[nodiscard]] Bytes body_as_rlp() const;
     void init_from_rlp(ByteView data);
-    [[nodiscard]]
-    Bytes body_encrypted() const;
+    [[nodiscard]] Bytes body_encrypted() const;
     static Bytes decrypt_body(ByteView data, ByteView recipient_private_key);
 
     common::EccPublicKey initiator_public_key_;

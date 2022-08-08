@@ -15,20 +15,45 @@ limitations under the License.
 */
 
 #include "auth_ack_message.hpp"
+#include <silkworm/rlp/encode_vector.hpp>
 #include <silkworm/sentry/common/random.hpp>
+#include "ecies_cipher.hpp"
 
 namespace silkworm::sentry::rlpx::auth {
 
-AuthAckMessage::AuthAckMessage() : nonce_(common::random_bytes(32)) {
+AuthAckMessage::AuthAckMessage(
+    common::EccPublicKey initiator_public_key,
+    common::EccPublicKey ephemeral_public_key)
+    : initiator_public_key_(std::move(initiator_public_key)),
+      ephemeral_public_key_(std::move(ephemeral_public_key)),
+      nonce_(common::random_bytes(32)) {
 }
 
-AuthAckMessage::AuthAckMessage(ByteView) {
+AuthAckMessage::AuthAckMessage(ByteView)
+    : initiator_public_key_(Bytes{}),
+      ephemeral_public_key_(Bytes{}) {
     // TODO
+}
+
+Bytes AuthAckMessage::body_as_rlp() const {
+    Bytes data;
+    rlp::encode(data, ephemeral_public_key_.serialized(), nonce_, version);
+    return data;
+}
+
+Bytes AuthAckMessage::body_encrypted() const {
+    Bytes body = body_as_rlp();
+    body.resize(EciesCipher::round_up_to_block_size(body.size()));
+    return EciesCipher::encrypt(body, initiator_public_key_);
 }
 
 Bytes AuthAckMessage::serialize() const {
-    // TODO
-    return Bytes();
+    Bytes body = body_encrypted();
+
+    Bytes size(sizeof(uint16_t), 0);
+    endian::store_big_u16(size.data(), static_cast<uint16_t>(body.size()));
+
+    return size + body;
 }
 
 }  // namespace silkworm::sentry::rlpx::auth

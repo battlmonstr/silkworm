@@ -34,7 +34,10 @@ boost::asio::awaitable<void> AuthRecipient::execute(common::Socket& socket) {
     Bytes auth_message_data = std::get<Bytes>(co_await (socket.receive() || timeout()));
     AuthMessage auth_message(auth_message_data, recipient_key_pair_);
 
-    AuthAckMessage auth_ack_message;
+    AuthAckMessage auth_ack_message{
+        auth_message.initiator_public_key(),
+        recipient_ephemeral_key_pair_.public_key(),
+    };
     co_await (socket.send(auth_ack_message.serialize()) || timeout());
 }
 

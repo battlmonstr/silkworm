@@ -33,6 +33,7 @@ class AuthRecipient {
 
   private:
     common::EccKeyPair recipient_key_pair_;
+    common::EccKeyPair recipient_ephemeral_key_pair_;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth
