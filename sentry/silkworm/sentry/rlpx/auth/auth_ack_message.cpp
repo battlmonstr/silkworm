@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include "auth_ack_message.hpp"
+#include <silkworm/rlp/decode.hpp>
 #include <silkworm/rlp/encode_vector.hpp>
 #include <silkworm/sentry/common/random.hpp>
 #include "ecies_cipher.hpp"
@@ -29,10 +30,12 @@ AuthAckMessage::AuthAckMessage(
       nonce_(common::random_bytes(32)) {
 }
 
-AuthAckMessage::AuthAckMessage(ByteView)
-    : initiator_public_key_(Bytes{}),
+AuthAckMessage::AuthAckMessage(
+    ByteView data,
+    const common::EccKeyPair& initiator_key_pair)
+    : initiator_public_key_(initiator_key_pair.public_key()),
       ephemeral_public_key_(Bytes{}) {
-    // TODO
+    init_from_rlp(AuthAckMessage::decrypt_body(data, initiator_key_pair.private_key()));
 }
 
 Bytes AuthAckMessage::body_as_rlp() const {
@@ -41,10 +44,23 @@ Bytes AuthAckMessage::body_as_rlp() const {
     return data;
 }
 
+void AuthAckMessage::init_from_rlp(ByteView data) {
+    Bytes public_key_data;
+    auto err = rlp::decode(data, public_key_data, nonce_);
+    if (err != DecodingResult::kOk) {
+        throw std::runtime_error("Failed to decode AuthAckMessage RLP");
+    }
+    ephemeral_public_key_ = common::EccPublicKey::deserialize(public_key_data);
+}
+
 Bytes AuthAckMessage::body_encrypted() const {
     Bytes body = body_as_rlp();
     body.resize(EciesCipher::round_up_to_block_size(body.size()));
     return EciesCipher::encrypt(body, initiator_public_key_);
+}
+
+Bytes AuthAckMessage::decrypt_body(ByteView data, ByteView initiator_private_key) {
+    return EciesCipher::decrypt(data, initiator_private_key);
 }
 
 Bytes AuthAckMessage::serialize() const {

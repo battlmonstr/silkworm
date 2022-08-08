@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <silkworm/common/base.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
@@ -26,7 +27,9 @@ class AuthAckMessage {
     AuthAckMessage(
         common::EccPublicKey initiator_public_key,
         common::EccPublicKey ephemeral_public_key);
-    explicit AuthAckMessage(ByteView data);
+    AuthAckMessage(
+        ByteView data,
+        const common::EccKeyPair& initiator_key_pair);
 
     [[nodiscard]] Bytes serialize() const;
 
@@ -36,7 +39,10 @@ class AuthAckMessage {
 
   private:
     [[nodiscard]] Bytes body_as_rlp() const;
+    void init_from_rlp(ByteView data);
+
     [[nodiscard]] Bytes body_encrypted() const;
+    static Bytes decrypt_body(ByteView data, ByteView initiator_private_key);
 
     common::EccPublicKey initiator_public_key_;
     common::EccPublicKey ephemeral_public_key_;
