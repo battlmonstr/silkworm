@@ -31,7 +31,7 @@ boost::asio::awaitable<void> HandshakeRecipient::execute(common::Socket& socket)
     common::Timeout timeout(5s);
 
     Bytes auth_message_data = std::get<Bytes>(co_await (socket.receive() || timeout()));
-    AuthMessage auth_message(auth_message_data);
+    AuthMessage auth_message(auth_message_data, recipient_key_pair_);
 
     AuthAckMessage auth_ack_message;
     co_await (socket.send(auth_ack_message.serialize()) || timeout());

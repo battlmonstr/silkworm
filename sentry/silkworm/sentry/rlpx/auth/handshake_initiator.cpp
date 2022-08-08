@@ -30,7 +30,7 @@ using namespace common::awaitable_wait_for_one;
 boost::asio::awaitable<void> HandshakeInitiator::execute(common::Socket& socket) {
     common::Timeout timeout(5s);
 
-    AuthMessage auth_message{initiator_public_key_, recipient_public_key_};
+    AuthMessage auth_message{initiator_key_pair_, recipient_public_key_, initiator_ephemeral_key_pair_};
     co_await (socket.send(auth_message.serialize()) || timeout());
 
     Bytes auth_ack_message_data = std::get<Bytes>(co_await (socket.receive() || timeout()));

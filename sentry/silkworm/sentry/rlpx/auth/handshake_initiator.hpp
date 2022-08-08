@@ -20,20 +20,22 @@ limitations under the License.
 #include <boost/asio/awaitable.hpp>
 #include <silkworm/sentry/common/socket.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
 class HandshakeInitiator {
   public:
-    HandshakeInitiator(common::EccPublicKey initiator_public_key, common::EccPublicKey recipient_public_key)
-        : initiator_public_key_(std::move(initiator_public_key)),
+    HandshakeInitiator(common::EccKeyPair initiator_key_pair, common::EccPublicKey recipient_public_key)
+        : initiator_key_pair_(std::move(initiator_key_pair)),
           recipient_public_key_(std::move(recipient_public_key)) {}
 
     boost::asio::awaitable<void> execute(common::Socket& socket);
 
   private:
-    common::EccPublicKey initiator_public_key_;
+    common::EccKeyPair initiator_key_pair_;
     common::EccPublicKey recipient_public_key_;
+    common::EccKeyPair initiator_ephemeral_key_pair_;
 };
 
 }  // namespace silkworm::sentry::rlpx::auth

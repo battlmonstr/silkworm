@@ -195,13 +195,7 @@ EciesCipher::Message EciesCipher::deserialize_message(ByteView message_data) {
     Bytes cipher_text{&message_data[key_size + iv_size], cipher_text_size};
     Bytes mac{&message_data[key_size + iv_size + cipher_text_size], mac_size};
 
-    SecP256K1Context ctx;
-    secp256k1_pubkey public_key;
-    bool ok = ctx.parse_public_key(&public_key, key_data);
-    if (!ok) {
-        throw std::runtime_error("Failed to parse an ephemeral public key");
-    }
-    common::EccPublicKey ephemeral_public_key{{public_key.data, sizeof(public_key.data)}};
+    auto ephemeral_public_key = common::EccPublicKey::deserialize(key_data);
 
     return {
         std::move(ephemeral_public_key),

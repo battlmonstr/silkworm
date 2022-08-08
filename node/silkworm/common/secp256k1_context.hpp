@@ -16,9 +16,11 @@ limitations under the License.
 
 #pragma once
 
+#include <utility>
 #include <gsl/pointers>
 #include <secp256k1.h>
 #include <silkpre/ecdsa.h>
+#include <secp256k1_recovery.h>
 
 namespace silkworm {
 
@@ -65,14 +67,29 @@ class SecP256K1Context final {
         return silkpre_secp256k1_ecdh(context_, shared_secret.data(), public_key, private_key.data());
     }
 
-    bool sign(secp256k1_ecdsa_signature* signature, ByteView data, ByteView private_key) {
-        return secp256k1_ecdsa_sign(context_, signature, data.data(), private_key.data(), nullptr, nullptr);
+    bool sign_recoverable(secp256k1_ecdsa_recoverable_signature* signature, ByteView data, ByteView private_key) {
+        if (data.size() != 32)
+            return false;
+        return secp256k1_ecdsa_sign_recoverable(context_, signature, data.data(), private_key.data(), nullptr, nullptr);
     }
 
-    Bytes serialize_signature(const secp256k1_ecdsa_signature* signature) {
+    bool recover_signature_public_key(secp256k1_pubkey* public_key, const secp256k1_ecdsa_recoverable_signature* signature, ByteView data) {
+        if (data.size() != 32)
+            return false;
+        return secp256k1_ecdsa_recover(context_, public_key, signature, data.data());
+    }
+
+    std::pair<Bytes, uint8_t> serialize_recoverable_signature(const secp256k1_ecdsa_recoverable_signature* signature) {
         Bytes data(64, 0);
-        secp256k1_ecdsa_signature_serialize_compact(context_, data.data(), signature);
-        return data;
+        int recovery_id;
+        secp256k1_ecdsa_recoverable_signature_serialize_compact(context_, data.data(), &recovery_id, signature);
+        return {data, static_cast<uint8_t>(recovery_id)};
+    }
+
+    bool parse_recoverable_signature(secp256k1_ecdsa_recoverable_signature *signature, const ByteView& signature_data, uint8_t recovery_id) {
+        if (signature_data.size() != 64)
+            return false;
+        return secp256k1_ecdsa_recoverable_signature_parse_compact(context_, signature, signature_data.data(), static_cast<int>(recovery_id));
     }
 
   private:

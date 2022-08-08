@@ -77,7 +77,7 @@ awaitable<void> Server::start(
         auto recipient_public_key = node_key.public_key();
         auto peer = std::make_unique<Peer>(
                 std::move(socket),
-                /* initiator_public_key */ std::nullopt,
+                node_key,
                 std::move(recipient_public_key));
         auto handler = co_spawn(client_context, peer->handle(), use_future);
 

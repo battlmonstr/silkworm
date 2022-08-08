@@ -19,6 +19,7 @@ limitations under the License.
 #include <functional>
 #include <silkworm/common/endian.hpp>
 #include <silkworm/common/secp256k1_context.hpp>
+#include <silkworm/rlp/decode.hpp>
 #include <silkworm/rlp/encode_vector.hpp>
 #include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/random.hpp>
@@ -28,33 +29,73 @@ namespace silkworm::sentry::rlpx::auth {
 
 static Bytes sign(ByteView data, ByteView private_key) {
     SecP256K1Context ctx{/* allow_verify = */ false, /* allow_sign = */ true};
-    secp256k1_ecdsa_signature signature;
-    bool ok = ctx.sign(&signature, data, private_key);
+    secp256k1_ecdsa_recoverable_signature signature;
+    bool ok = ctx.sign_recoverable(&signature, data, private_key);
     if (!ok) {
         throw std::runtime_error("Failed to sign an AuthMessage");
     }
 
-    return ctx.serialize_signature(&signature);
+    auto [signature_data, recovery_id] = ctx.serialize_recoverable_signature(&signature);
+    signature_data.push_back(recovery_id);
+    return signature_data;
 }
 
-AuthMessage::AuthMessage(common::EccPublicKey initiator_public_key, common::EccPublicKey recipient_public_key)
-    : initiator_public_key_(std::move(initiator_public_key)),
-      recipient_public_key_(std::move(recipient_public_key)) {
+static common::EccPublicKey recover_and_verify(ByteView data, ByteView signature_and_recovery_id) {
+    if (signature_and_recovery_id.empty()) {
+        throw std::runtime_error("AuthMessage signature is empty");
+    }
+    uint8_t recovery_id = signature_and_recovery_id.back();
+    ByteView signature_data = {signature_and_recovery_id.data(), signature_and_recovery_id.size() - 1};
 
-    common::EccKeyPair ephemeral_key_pair;
-    Bytes shared_secret = EciesCipher::compute_shared_secret(recipient_public_key_, ephemeral_key_pair.private_key());
+    SecP256K1Context ctx;
+    secp256k1_ecdsa_recoverable_signature signature;
+    bool ok = ctx.parse_recoverable_signature(&signature, signature_data, recovery_id);
+    if (!ok) {
+        throw std::runtime_error("Failed to parse an AuthMessage signature");
+    }
+
+    secp256k1_pubkey public_key;
+    ok = ctx.recover_signature_public_key(&public_key, &signature, data);
+    if (!ok) {
+        throw std::runtime_error("Failed to recover a public key from an AuthMessage signature");
+    }
+    return common::EccPublicKey{Bytes{public_key.data, sizeof(public_key.data)}};
+}
+
+AuthMessage::AuthMessage(
+    const common::EccKeyPair& initiator_key_pair,
+    common::EccPublicKey recipient_public_key,
+    const common::EccKeyPair& ephemeral_key_pair)
+    : initiator_public_key_(initiator_key_pair.public_key()),
+      recipient_public_key_(std::move(recipient_public_key)),
+      ephemeral_public_key_(ephemeral_key_pair.public_key()) {
+
+    Bytes shared_secret = EciesCipher::compute_shared_secret(recipient_public_key_, initiator_key_pair.private_key());
 
     nonce_ = common::random_bytes(shared_secret.size());
 
     // shared_secret ^= nonce_
     std::transform(shared_secret.cbegin(), shared_secret.cend(), nonce_.cbegin(), shared_secret.begin(), std::bit_xor<>{});
+
     signature_ = sign(shared_secret, ephemeral_key_pair.private_key());
 }
 
-AuthMessage::AuthMessage(ByteView)
-    : initiator_public_key_({{}}),
-      recipient_public_key_({{}}) {
-    // TODO
+AuthMessage::AuthMessage(ByteView data, const common::EccKeyPair& recipient_key_pair)
+    : initiator_public_key_(Bytes{}),
+      recipient_public_key_(recipient_key_pair.public_key()),
+      ephemeral_public_key_(Bytes{}) {
+    auto recipient_private_key = recipient_key_pair.private_key();
+    init_from_rlp(AuthMessage::decrypt_body(data, recipient_private_key));
+
+    Bytes shared_secret = EciesCipher::compute_shared_secret(initiator_public_key_, recipient_private_key);
+
+    if (shared_secret.size() != nonce_.size())
+        throw std::runtime_error("AuthMessage: invalid nonce size");
+
+    // shared_secret ^= nonce_
+    std::transform(shared_secret.cbegin(), shared_secret.cend(), nonce_.cbegin(), shared_secret.begin(), std::bit_xor<>{});
+
+    ephemeral_public_key_ = recover_and_verify(shared_secret, signature_);
 }
 
 Bytes AuthMessage::body_as_rlp() const {
@@ -63,10 +104,23 @@ Bytes AuthMessage::body_as_rlp() const {
     return data;
 }
 
+void AuthMessage::init_from_rlp(ByteView data) {
+    Bytes public_key_data;
+    auto err = rlp::decode(data, signature_, public_key_data, nonce_);
+    if (err != DecodingResult::kOk) {
+        throw std::runtime_error("Failed to decode AuthMessage RLP");
+    }
+    initiator_public_key_ = common::EccPublicKey::deserialize(public_key_data);
+}
+
 Bytes AuthMessage::body_encrypted() const {
     Bytes body = body_as_rlp();
     body.resize(EciesCipher::round_up_to_block_size(body.size()));
     return EciesCipher::encrypt(body, recipient_public_key_);
+}
+
+Bytes AuthMessage::decrypt_body(ByteView data, ByteView recipient_private_key) {
+    return EciesCipher::decrypt(data, recipient_private_key);
 }
 
 Bytes AuthMessage::serialize() const {

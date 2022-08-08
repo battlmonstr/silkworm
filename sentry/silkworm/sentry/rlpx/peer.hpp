@@ -21,6 +21,7 @@ limitations under the License.
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/socket.hpp>
 
 namespace silkworm::sentry::rlpx {
@@ -29,11 +30,11 @@ class Peer {
   public:
     explicit Peer(
             common::Socket socket,
-            std::optional<common::EccPublicKey> initiator_public_key,
-            common::EccPublicKey recipient_public_key)
+            common::EccKeyPair node_key,
+            std::optional<common::EccPublicKey> peer_public_key)
         : socket_(std::move(socket)),
-          initiator_public_key_(std::move(initiator_public_key)),
-          recipient_public_key_(std::move(recipient_public_key)) {}
+          node_key_(std::move(node_key)),
+          peer_public_key_(std::move(peer_public_key)) {}
 
     Peer(Peer&&) = default;
     Peer& operator=(Peer&&) = default;
@@ -42,8 +43,8 @@ class Peer {
 
   private:
     common::Socket socket_;
-    std::optional<common::EccPublicKey> initiator_public_key_;
-    common::EccPublicKey recipient_public_key_;
+    common::EccKeyPair node_key_;
+    std::optional<common::EccPublicKey> peer_public_key_;
 };
 
 }  // namespace silkworm::sentry::rlpx

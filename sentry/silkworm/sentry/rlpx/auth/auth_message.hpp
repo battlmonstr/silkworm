@@ -18,25 +18,35 @@ limitations under the License.
 
 #include <silkworm/common/base.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
+#include <silkworm/sentry/common/ecc_key_pair.hpp>
 
 namespace silkworm::sentry::rlpx::auth {
 
 class AuthMessage {
   public:
-    AuthMessage(common::EccPublicKey initiator_public_key, common::EccPublicKey recipient_public_key);
-    explicit AuthMessage(ByteView data);
+    AuthMessage(
+        const common::EccKeyPair& initiator_key_pair,
+        common::EccPublicKey recipient_public_key,
+        const common::EccKeyPair& ephemeral_key_pair);
+    AuthMessage(ByteView data, const common::EccKeyPair& recipient_key_pair);
 
     [[nodiscard]]
     Bytes serialize() const;
 
+    [[nodiscard]]
+    const common::EccPublicKey& ephemeral_public_key() const { return ephemeral_public_key_; }
+
   private:
     [[nodiscard]]
     Bytes body_as_rlp() const;
+    void init_from_rlp(ByteView data);
     [[nodiscard]]
     Bytes body_encrypted() const;
+    static Bytes decrypt_body(ByteView data, ByteView recipient_private_key);
 
     common::EccPublicKey initiator_public_key_;
     common::EccPublicKey recipient_public_key_;
+    common::EccPublicKey ephemeral_public_key_;
     Bytes nonce_;
     Bytes signature_;
     static const uint8_t version = 4;
