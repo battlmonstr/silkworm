@@ -216,7 +216,7 @@ EciesCipher::Message EciesCipher::deserialize_message(ByteView message_data) {
     Bytes cipher_text{&message_data[key_size + iv_size], cipher_text_size};
     Bytes mac{&message_data[key_size + iv_size + cipher_text_size], mac_size};
 
-    auto ephemeral_public_key = common::EccPublicKey::deserialize(key_data);
+    auto ephemeral_public_key = common::EccPublicKey::deserialize_std(key_data);
 
     return {
         std::move(ephemeral_public_key),

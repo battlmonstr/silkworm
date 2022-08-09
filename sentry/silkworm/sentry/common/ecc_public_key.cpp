@@ -39,7 +39,7 @@ std::string EccPublicKey::hex() const {
     return ::silkworm::to_hex(serialized());
 }
 
-EccPublicKey EccPublicKey::deserialize(ByteView serialized_data) {
+EccPublicKey EccPublicKey::deserialize_std(ByteView serialized_data) {
     SecP256K1Context ctx;
     secp256k1_pubkey public_key;
     bool ok = ctx.parse_public_key(&public_key, serialized_data);
@@ -47,6 +47,14 @@ EccPublicKey EccPublicKey::deserialize(ByteView serialized_data) {
         throw std::runtime_error("Failed to parse an ephemeral public key");
     }
     return EccPublicKey{Bytes{public_key.data, sizeof(public_key.data)}};
+}
+
+EccPublicKey EccPublicKey::deserialize(ByteView serialized_data) {
+    Bytes data;
+    data.reserve(serialized_data.size() + 1);
+    data.push_back(SECP256K1_TAG_PUBKEY_UNCOMPRESSED);
+    data += serialized_data;
+    return deserialize_std(data);
 }
 
 }  // namespace silkworm::sentry::common
