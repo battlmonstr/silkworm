@@ -21,6 +21,7 @@ limitations under the License.
 #include <secp256k1.h>
 #include <silkpre/ecdsa.h>
 #include <secp256k1_recovery.h>
+#include <silkworm/common/base.hpp>
 
 namespace silkworm {
 
@@ -48,16 +49,7 @@ class SecP256K1Context final {
         return secp256k1_ec_pubkey_create(context_, public_key, private_key.data());
     }
 
-    Bytes serialize_public_key(const secp256k1_pubkey* public_key, bool is_compressed) const {
-        const size_t kSizeCompressed = 33;
-        const size_t kSizeUncompressed = 65;
-        size_t data_size = is_compressed ? kSizeCompressed : kSizeUncompressed;
-        Bytes data(data_size, 0);
-        unsigned int flags = is_compressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED;
-        secp256k1_ec_pubkey_serialize(context_, data.data(), &data_size, public_key, flags);
-        data.resize(data_size);
-        return data;
-    }
+    Bytes serialize_public_key(const secp256k1_pubkey* public_key, bool is_compressed) const;
 
     bool parse_public_key(secp256k1_pubkey* public_key, const ByteView& public_key_data) const {
         return secp256k1_ec_pubkey_parse(context_, public_key, public_key_data.data(), public_key_data.size());
@@ -92,17 +84,11 @@ class SecP256K1Context final {
         return secp256k1_ecdsa_recoverable_signature_parse_compact(context_, signature, signature_data.data(), static_cast<int>(recovery_id));
     }
 
+    static const size_t kPublicKeySizeCompressed;
+    static const size_t kPublicKeySizeUncompressed;
+
   private:
-    static unsigned int flags(bool allow_verify, bool allow_sign) {
-        unsigned int value = SECP256K1_CONTEXT_NONE;
-        if (allow_verify) {
-            value |= SECP256K1_CONTEXT_VERIFY;
-        }
-        if (allow_sign) {
-            value |= SECP256K1_CONTEXT_SIGN;
-        }
-        return value;
-    }
+    static unsigned int flags(bool allow_verify, bool allow_sign);
 
     gsl::owner<secp256k1_context*> context_;
 };
