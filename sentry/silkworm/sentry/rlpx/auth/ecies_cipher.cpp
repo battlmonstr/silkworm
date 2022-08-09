@@ -31,11 +31,12 @@ limitations under the License.
 namespace silkworm::sentry::rlpx::auth {
 
 static const std::size_t kKeySize = 16;
+static const std::size_t kMacSize = 32;
 
 static Bytes aes_encrypt(ByteView plain_text, ByteView key, ByteView iv);
 static Bytes aes_decrypt(ByteView cipher_text, ByteView key, ByteView iv);
 static Bytes sha256(ByteView data);
-static Bytes hmac(ByteView key, ByteView data1, ByteView data2);
+static Bytes hmac(ByteView key, ByteView data1, ByteView data2, ByteView data3);
 
 Bytes EciesCipher::compute_shared_secret(PublicKeyView public_key_view, PrivateKeyView private_key) {
     secp256k1_pubkey public_key;
@@ -52,7 +53,7 @@ Bytes EciesCipher::compute_shared_secret(PublicKeyView public_key_view, PrivateK
     return shared_secret;
 }
 
-EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKeyView public_key_view) {
+EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKeyView public_key_view, ByteView mac_extra_data) {
     common::EccKeyPair ephemeral_key_pair;
 
     Bytes shared_secret = compute_shared_secret(public_key_view, ephemeral_key_pair.private_key());
@@ -62,7 +63,7 @@ EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKey
     Bytes iv = common::random_bytes(AES_BLOCK_SIZE);
 
     Bytes cypher_text = aes_encrypt(plain_text, aes_key, iv);
-    Bytes mac = hmac(sha256(mac_key), iv, cypher_text);
+    Bytes mac = hmac(sha256(mac_key), iv, cypher_text, mac_extra_data);
 
     return {
         ephemeral_key_pair.public_key(),
@@ -72,12 +73,12 @@ EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKey
     };
 }
 
-Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateKeyView private_key) {
+Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateKeyView private_key, ByteView mac_extra_data) {
     Bytes shared_secret = compute_shared_secret(message.ephemeral_public_key, private_key);
     ByteView aes_key(shared_secret.data(), kKeySize);
     ByteView mac_key(&shared_secret[kKeySize], kKeySize);
 
-    Bytes mac = hmac(sha256(mac_key), message.iv, message.cipher_text);
+    Bytes mac = hmac(sha256(mac_key), message.iv, message.cipher_text, mac_extra_data);
     if (mac != message.mac) {
         throw std::runtime_error("Invalid MAC");
     }
@@ -87,6 +88,13 @@ Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateK
 
 size_t EciesCipher::round_up_to_block_size(size_t size) {
     return (size + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE * AES_BLOCK_SIZE;
+}
+
+size_t EciesCipher::estimate_encrypted_size(size_t size) {
+    return size
+        + SecP256K1Context::kPublicKeySizeUncompressed
+        + AES_BLOCK_SIZE
+        + kMacSize;
 }
 
 static Bytes aes_encrypt(ByteView plain_text, ByteView key, ByteView iv) {
@@ -140,7 +148,7 @@ static Bytes sha256(ByteView data) {
     return hash;
 }
 
-static Bytes hmac(ByteView key, ByteView data1, ByteView data2) {
+static Bytes hmac(ByteView key, ByteView data1, ByteView data2, ByteView data3) {
     assert(key.size() == 32);
 
     HMAC_CTX* ctx = HMAC_CTX_new();
@@ -152,6 +160,7 @@ static Bytes hmac(ByteView key, ByteView data1, ByteView data2) {
 
     HMAC_Update(ctx, data1.data(), data1.size());
     HMAC_Update(ctx, data2.data(), data2.size());
+    HMAC_Update(ctx, data3.data(), data3.size());
 
     Bytes hash(HMAC_size(ctx), 0);
     HMAC_Final(ctx, hash.data(), nullptr);
@@ -180,9 +189,9 @@ Bytes EciesCipher::serialize_message(const Message& message) {
 }
 
 EciesCipher::Message EciesCipher::deserialize_message(ByteView message_data) {
-    const std::size_t key_size = 65;
+    const std::size_t key_size = SecP256K1Context::kPublicKeySizeUncompressed;
     const std::size_t iv_size = AES_BLOCK_SIZE;
-    const std::size_t mac_size = 32;
+    const std::size_t mac_size = kMacSize;
 
     const std::size_t min_size = key_size + iv_size + mac_size;
     if (message_data.size() < min_size) {
@@ -205,12 +214,12 @@ EciesCipher::Message EciesCipher::deserialize_message(ByteView message_data) {
     };
 }
 
-Bytes EciesCipher::encrypt(ByteView plain_text, PublicKeyView public_key) {
-    return serialize_message(encrypt_message(plain_text, public_key));
+Bytes EciesCipher::encrypt(ByteView plain_text, PublicKeyView public_key, ByteView mac_extra_data) {
+    return serialize_message(encrypt_message(plain_text, public_key, mac_extra_data));
 }
 
-Bytes EciesCipher::decrypt(ByteView message_data, PrivateKeyView private_key) {
-    return decrypt_message(deserialize_message(message_data), private_key);
+Bytes EciesCipher::decrypt(ByteView message_data, PrivateKeyView private_key, ByteView mac_extra_data) {
+    return decrypt_message(deserialize_message(message_data), private_key, mac_extra_data);
 }
 
 

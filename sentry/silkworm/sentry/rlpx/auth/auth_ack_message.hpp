@@ -41,7 +41,7 @@ class AuthAckMessage {
     [[nodiscard]] Bytes body_as_rlp() const;
     void init_from_rlp(ByteView data);
 
-    [[nodiscard]] Bytes body_encrypted() const;
+    static Bytes serialize_size(size_t body_size);
     static Bytes decrypt_body(ByteView data, ByteView initiator_private_key);
 
     common::EccPublicKey initiator_public_key_;

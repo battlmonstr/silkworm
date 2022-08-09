@@ -34,14 +34,15 @@ class EciesCipher {
         Bytes mac;
     };
 
-    static Message encrypt_message(ByteView plain_text, PublicKeyView public_key);
-    static Bytes decrypt_message(const Message& message, PrivateKeyView private_key);
+    static Message encrypt_message(ByteView plain_text, PublicKeyView public_key, ByteView mac_extra_data);
+    static Bytes decrypt_message(const Message& message, PrivateKeyView private_key, ByteView mac_extra_data);
 
-    static Bytes encrypt(ByteView plain_text, PublicKeyView public_key);
-    static Bytes decrypt(ByteView message_data, PrivateKeyView private_key);
+    static Bytes encrypt(ByteView plain_text, PublicKeyView public_key, ByteView mac_extra_data);
+    static Bytes decrypt(ByteView message_data, PrivateKeyView private_key, ByteView mac_extra_data);
 
     static Bytes compute_shared_secret(PublicKeyView public_key, PrivateKeyView private_key);
     static size_t round_up_to_block_size(size_t size);
+    static size_t estimate_encrypted_size(size_t size);
 
   private:
     static Bytes serialize_message(const Message& message);

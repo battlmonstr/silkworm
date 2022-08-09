@@ -115,22 +115,24 @@ void AuthMessage::init_from_rlp(ByteView data) {
     initiator_public_key_ = common::EccPublicKey::deserialize(public_key_data);
 }
 
-Bytes AuthMessage::body_encrypted() const {
-    Bytes body = body_as_rlp();
-    body.resize(EciesCipher::round_up_to_block_size(body.size()));
-    return EciesCipher::encrypt(body, recipient_public_key_);
+Bytes AuthMessage::serialize_size(size_t body_size) {
+    Bytes size(sizeof(uint16_t), 0);
+    endian::store_big_u16(size.data(), static_cast<uint16_t>(body_size));
+    return size;
 }
 
 Bytes AuthMessage::decrypt_body(ByteView data, ByteView recipient_private_key) {
-    return EciesCipher::decrypt(data, recipient_private_key);
+    Bytes size = serialize_size(data.size());
+    return EciesCipher::decrypt(data, recipient_private_key, size);
 }
 
 Bytes AuthMessage::serialize() const {
-    Bytes body = body_encrypted();
+    Bytes body_rlp = body_as_rlp();
+    body_rlp.resize(EciesCipher::round_up_to_block_size(body_rlp.size()));
+    size_t body_size = EciesCipher::estimate_encrypted_size(body_rlp.size());
 
-    Bytes size(sizeof(uint16_t), 0);
-    endian::store_big_u16(size.data(), static_cast<uint16_t>(body.size()));
-
+    Bytes size = serialize_size(body_size);
+    Bytes body = EciesCipher::encrypt(body_rlp, recipient_public_key_, size);
     return size + body;
 }
 
