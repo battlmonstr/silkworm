@@ -23,7 +23,8 @@ namespace silkworm::sentry::common {
 
 using namespace std;
 
-EnodeUrl::EnodeUrl(const string& url_str) {
+EnodeUrl::EnodeUrl(const string& url_str)
+    : public_key_(Bytes{}) {
     regex url_regex(
         R"(enode://([0-9a-f]+)@((?:\d+\.){3}\d+)\:(\d+))",
         regex::icase
@@ -41,7 +42,7 @@ EnodeUrl::EnodeUrl(const string& url_str) {
 
     auto port = boost::lexical_cast<uint16_t>(port_str);
 
-    pub_key_hex_ = pub_key_hex;
+    public_key_ = common::EccPublicKey::deserialize_hex(pub_key_hex);
     ip_ = ip;
     port_ = port;
 }
@@ -49,7 +50,7 @@ EnodeUrl::EnodeUrl(const string& url_str) {
 string EnodeUrl::to_string() const {
     ostringstream out;
     out << "enode://";
-    out << pub_key_hex_ << "@";
+    out << public_key_.hex() << "@";
     out << ip_.to_string();
     out << ":" << port_;
     return out.str();

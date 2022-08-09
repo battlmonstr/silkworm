@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <silkworm/concurrency/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 #include <silkworm/common/base.hpp>
@@ -27,6 +28,7 @@ namespace silkworm::sentry::common {
 class Socket {
   public:
     explicit Socket(boost::asio::io_context& io_context) : socket_(io_context) {}
+    explicit Socket(boost::asio::any_io_executor& executor) : socket_(executor) {}
 
     Socket(Socket&&) = default;
     Socket& operator=(Socket&&) = default;

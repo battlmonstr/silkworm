@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
 #include <silkworm/common/base.hpp>
 
 namespace silkworm::sentry::common {
@@ -32,10 +34,10 @@ class EccPublicKey {
 
     [[nodiscard]] static EccPublicKey deserialize_std(ByteView serialized_data);
     [[nodiscard]] static EccPublicKey deserialize(ByteView serialized_data);
+    [[nodiscard]] static EccPublicKey deserialize_hex(std::string_view hex);
 
   private:
     Bytes data_;
-
 };
 
 }  // namespace silkworm::sentry::common

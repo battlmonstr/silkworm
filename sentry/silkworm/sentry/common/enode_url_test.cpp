@@ -21,20 +21,20 @@ limitations under the License.
 namespace silkworm::sentry::common {
 
 TEST_CASE("EnodeUrl") {
-    EnodeUrl url1("enode://aa@1.2.3.4:5");
-    CHECK(url1.pub_key_hex() == "aa");
+    EnodeUrl url1("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4:5");
+    CHECK(url1.public_key().hex() == "24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d");
     CHECK(url1.ip().to_string() == "1.2.3.4");
     CHECK(url1.port() == 5);
-    CHECK(url1.to_string() == "enode://aa@1.2.3.4:5");
+    CHECK(url1.to_string() == "enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4:5");
 
-    CHECK_THROWS(EnodeUrl("http://aa@1.2.3.4:5"));
+    CHECK_THROWS(EnodeUrl("http://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4:5"));
     CHECK_THROWS(EnodeUrl("enode://xx@1.2.3.4:5"));
     CHECK_THROWS(EnodeUrl("enode://1.2.3.4:5"));
-    CHECK_THROWS(EnodeUrl("enode://aa@90000.2.3.4:5"));
-    CHECK_THROWS(EnodeUrl("enode://aa@localhost:5"));
-    CHECK_THROWS(EnodeUrl("enode://aa@1.2.3.4:x"));
-    CHECK_THROWS(EnodeUrl("enode://aa@1.2.3.4:90000"));
-    CHECK_THROWS(EnodeUrl("enode://aa@1.2.3.4"));
+    CHECK_THROWS(EnodeUrl("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@90000.2.3.4:5"));
+    CHECK_THROWS(EnodeUrl("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@localhost:5"));
+    CHECK_THROWS(EnodeUrl("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4:x"));
+    CHECK_THROWS(EnodeUrl("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4:90000"));
+    CHECK_THROWS(EnodeUrl("enode://24bfa2cdce7c6a41184fa0809ad8d76969b7280952e9aa46179d90cfbab90f7d2b004928f0364389a1aa8d5166281f2ff7568493c1f719e8f6148ef8cf8af42d@1.2.3.4"));
 }
 
 }

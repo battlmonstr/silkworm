@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <string>
 #include <boost/asio/ip/address.hpp>
+#include "ecc_public_key.hpp"
 
 namespace silkworm::sentry::common {
 
@@ -25,13 +26,13 @@ class EnodeUrl {
   public:
     explicit EnodeUrl(const std::string& url_str);
 
-    EnodeUrl(std::string pub_key_hex, boost::asio::ip::address ip, uint16_t port)
-        : pub_key_hex_(std::move(pub_key_hex)),
+    EnodeUrl(common::EccPublicKey public_key, boost::asio::ip::address ip, uint16_t port)
+        : public_key_(std::move(public_key)),
           ip_(std::move(ip)),
           port_(port) {}
 
     [[nodiscard]]
-    const std::string& pub_key_hex() const { return pub_key_hex_; }
+    const common::EccPublicKey& public_key() const { return public_key_; }
     [[nodiscard]]
     const boost::asio::ip::address& ip() const { return ip_; }
     [[nodiscard]]
@@ -41,7 +42,7 @@ class EnodeUrl {
     std::string to_string() const;
 
   private:
-    std::string pub_key_hex_;
+    common::EccPublicKey public_key_;
     boost::asio::ip::address ip_;
     uint16_t port_;
 };

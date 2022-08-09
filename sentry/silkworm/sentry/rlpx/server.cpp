@@ -41,13 +41,13 @@ Server::Server(std::string host, uint16_t port) : host_(std::move(host)), port_(
 awaitable<void> Server::start(
         silkworm::rpc::ServerContextPool& context_pool,
         common::EccKeyPair node_key) {
-    auto io_context = co_await this_coro::executor;
+    auto executor = co_await this_coro::executor;
 
-    ip::tcp::resolver resolver{io_context};
+    ip::tcp::resolver resolver{executor};
     auto endpoints = co_await resolver.async_resolve(host_, std::to_string(port_), use_awaitable);
     const ip::tcp::endpoint& endpoint = *endpoints.cbegin();
 
-    ip::tcp::acceptor acceptor{io_context, endpoint.protocol()};
+    ip::tcp::acceptor acceptor{executor, endpoint.protocol()};
     acceptor.set_option(ip::tcp::acceptor::reuse_address(true));
 
 #if defined(_WIN32)
@@ -61,7 +61,7 @@ awaitable<void> Server::start(
     acceptor.bind(endpoint);
     acceptor.listen();
 
-    common::EnodeUrl node_url{node_key.public_key().hex(), endpoint.address(), port_};
+    common::EnodeUrl node_url{node_key.public_key(), endpoint.address(), port_};
     log::Info() << "RLPx server is listening at " << node_url.to_string();
 
     std::list<std::pair<std::unique_ptr<Peer>, std::future<void>>> peers;
