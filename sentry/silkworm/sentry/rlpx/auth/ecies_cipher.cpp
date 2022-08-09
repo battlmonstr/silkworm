@@ -24,6 +24,7 @@ limitations under the License.
 #include <openssl/hmac.h>
 #include <silkpre/sha256.h>
 
+#include <silkworm/common/endian.hpp>
 #include <silkworm/common/secp256k1_context.hpp>
 #include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/random.hpp>
@@ -33,6 +34,7 @@ namespace silkworm::sentry::rlpx::auth {
 static const std::size_t kKeySize = 16;
 static const std::size_t kMacSize = 32;
 
+static Bytes kdf(ByteView secret);
 static Bytes aes_encrypt(ByteView plain_text, ByteView key, ByteView iv);
 static Bytes aes_decrypt(ByteView cipher_text, ByteView key, ByteView iv);
 static Bytes sha256(ByteView data);
@@ -56,7 +58,7 @@ Bytes EciesCipher::compute_shared_secret(PublicKeyView public_key_view, PrivateK
 EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKeyView public_key_view, ByteView mac_extra_data) {
     common::EccKeyPair ephemeral_key_pair;
 
-    Bytes shared_secret = compute_shared_secret(public_key_view, ephemeral_key_pair.private_key());
+    Bytes shared_secret = kdf(compute_shared_secret(public_key_view, ephemeral_key_pair.private_key()));
     ByteView aes_key(shared_secret.data(), kKeySize);
     ByteView mac_key(&shared_secret[kKeySize], kKeySize);
 
@@ -74,7 +76,7 @@ EciesCipher::Message EciesCipher::encrypt_message(ByteView plain_text, PublicKey
 }
 
 Bytes EciesCipher::decrypt_message(const EciesCipher::Message& message, PrivateKeyView private_key, ByteView mac_extra_data) {
-    Bytes shared_secret = compute_shared_secret(message.ephemeral_public_key, private_key);
+    Bytes shared_secret = kdf(compute_shared_secret(message.ephemeral_public_key, private_key));
     ByteView aes_key(shared_secret.data(), kKeySize);
     ByteView mac_key(&shared_secret[kKeySize], kKeySize);
 
@@ -95,6 +97,16 @@ size_t EciesCipher::estimate_encrypted_size(size_t size) {
         + SecP256K1Context::kPublicKeySizeUncompressed
         + AES_BLOCK_SIZE
         + kMacSize;
+}
+
+// NIST SP 800-56 Concatenation Key Derivation Function (see section 5.8.1).
+// Since sha256 produces the right size, one iteration is enough.
+static Bytes kdf(ByteView secret) {
+    assert(secret.size() == kKeySize * 2);
+    Bytes data(sizeof(uint32_t), 0);
+    endian::store_big_u32(data.data(), 1);
+    data += secret;
+    return sha256(data);
 }
 
 static Bytes aes_encrypt(ByteView plain_text, ByteView key, ByteView iv) {
