@@ -28,16 +28,18 @@ namespace silkworm::sentry::rlpx::auth {
 using namespace std::chrono_literals;
 using namespace common::awaitable_wait_for_one;
 
-boost::asio::awaitable<void> Handshake::execute(common::Socket& socket) {
-    boost::asio::awaitable<AuthSession> auth_handshake;
+boost::asio::awaitable<AuthSession> Handshake::auth(common::Socket& socket) {
     if (peer_public_key_) {
         auth::AuthInitiator auth_initiator{node_key_, peer_public_key_.value()};
-        auth_handshake = auth_initiator.execute(socket);
+        co_return (co_await auth_initiator.execute(socket));
     } else {
         auth::AuthRecipient auth_recipient{node_key_};
-        auth_handshake = auth_recipient.execute(socket);
+        co_return (co_await auth_recipient.execute(socket));
     }
-    auto session = co_await std::move(auth_handshake);
+}
+
+boost::asio::awaitable<void> Handshake::execute(common::Socket& socket) {
+    auto session = co_await auth(socket);
     log::Debug() << "AuthSession.peer_ephemeral_public_key: " << session.peer_ephemeral_public_key.hex();
 
     // TODO: Hello message exchange

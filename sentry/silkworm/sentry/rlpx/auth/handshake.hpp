@@ -21,6 +21,7 @@
 #include <silkworm/sentry/common/socket.hpp>
 #include <silkworm/sentry/common/ecc_key_pair.hpp>
 #include <silkworm/sentry/common/ecc_public_key.hpp>
+#include "auth_session.hpp"
 
 namespace silkworm::sentry::rlpx::auth {
 
@@ -35,6 +36,8 @@ class Handshake {
     boost::asio::awaitable<void> execute(common::Socket& socket);
 
   private:
+    boost::asio::awaitable<AuthSession> auth(common::Socket& socket);
+
     common::EccKeyPair node_key_;
     std::optional<common::EccPublicKey> peer_public_key_;
 };
