@@ -15,38 +15,19 @@
 */
 
 #include "sha3_hasher.hpp"
-#include <stdexcept>
-#include <openssl/evp.h>
+#include <keccak.h>
 
 namespace silkworm::sentry::rlpx::crypto {
 
-Sha3Hasher::Sha3Hasher() : context_(EVP_MD_CTX_new()) {
-    int ok = EVP_DigestInit(context_, EVP_sha3_256());
-    if (!ok)
-        throw std::runtime_error("Failed to init SHA3 hasher");
-}
-
-Sha3Hasher::~Sha3Hasher() {
-    EVP_MD_CTX_free(context_);
+Sha3Hasher::Sha3Hasher() : state_(25 * sizeof(uint64_t), 0) {
 }
 
 void Sha3Hasher::update(ByteView data) {
-    int ok = EVP_DigestUpdate(context_, data.data(), data.size());
-    if (!ok)
-        throw std::runtime_error("Failed to update a SHA3 hasher state");
+    keccak(reinterpret_cast<uint64_t*>(state_.data()), 256, data.data(), data.size());
 }
 
-Bytes Sha3Hasher::hash() {
-    Bytes result(32, 0);
-    int ok = EVP_DigestFinal_ex(context_, result.data(), nullptr);
-    if (!ok)
-        throw std::runtime_error("Failed to generate a SHA3 hash");
-
-    ok = EVP_DigestInit_ex(context_, EVP_sha3_256(), nullptr);
-    if (!ok)
-        throw std::runtime_error("Failed to re-init SHA3 hasher");
-
-    return result;
+ByteView Sha3Hasher::hash() {
+    return ByteView{state_.data(), 32};
 }
 
 }  // namespace silkworm::sentry::rlpx::crypto

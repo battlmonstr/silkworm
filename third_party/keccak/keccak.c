@@ -298,7 +298,7 @@ __attribute__((constructor)) static void select_keccakf1600_implementation()
 #endif
 
 
-static inline ALWAYS_INLINE void keccak(
+void keccak(
     uint64_t* out, size_t bits, const uint8_t* data, size_t size)
 {
     static const size_t word_size = sizeof(uint64_t);
@@ -310,7 +310,7 @@ static inline ALWAYS_INLINE void keccak(
     uint64_t last_word = 0;
     uint8_t* last_word_iter = (uint8_t*)&last_word;
 
-    uint64_t state[25] = {0};
+    uint64_t* state = out;
 
     while (size >= block_size)
     {

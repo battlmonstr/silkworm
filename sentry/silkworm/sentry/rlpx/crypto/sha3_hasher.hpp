@@ -18,20 +18,17 @@
 
 #include <silkworm/common/base.hpp>
 
-typedef struct evp_md_ctx_st EVP_MD_CTX;
-
 namespace silkworm::sentry::rlpx::crypto {
 
 class Sha3Hasher final {
   public:
     Sha3Hasher();
-    ~Sha3Hasher();
 
     void update(ByteView data);
-    [[nodiscard]] Bytes hash();
+    [[nodiscard]] ByteView hash();
 
   private:
-    EVP_MD_CTX* context_;
+    Bytes state_;
 };
 
 }  // namespace silkworm::sentry::rlpx::crypto
