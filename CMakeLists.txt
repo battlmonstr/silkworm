@@ -144,6 +144,7 @@ if(NOT SILKWORM_CORE_ONLY)
 endif()
 
 add_subdirectory(third_party/silkpre)
+add_subdirectory(third_party/keccak)
 
 # Compiler enforcements on Silkworm
 if(NOT MSVC)

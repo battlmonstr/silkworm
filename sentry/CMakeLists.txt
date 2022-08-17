@@ -53,11 +53,13 @@ endif()
 target_include_directories(${TARGET} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   "${MAIN_DIR}/interfaces"
+  "${MAIN_DIR}/third_party/keccak"
 )
 
 set(LIBS
   Boost::thread
   gRPC::grpc++
+  keccak
   Microsoft.GSL::GSL
   protobuf::libprotobuf
   OpenSSL::Crypto

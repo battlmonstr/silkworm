@@ -2,8 +2,8 @@
 // Copyright 2018 Pawel Bylica.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../support/attributes.h"
-#include <ethash/keccak.h>
+#include "attributes.h"
+#include "keccak.h"
 
 #if !__has_builtin(__builtin_memcpy) && !defined(__GNUC__)
 #include <string.h>
