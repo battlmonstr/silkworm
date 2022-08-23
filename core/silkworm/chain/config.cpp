@@ -150,9 +150,11 @@ std::ostream& operator<<(std::ostream& out, const ChainConfig& obj) { return out
 
 std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(const uint64_t chain_id) noexcept {
     auto it{
-        as_range::find_if(kKnownChainConfigs, [&chain_id](const std::pair<std::string, const ChainConfig*>& x) -> bool {
-            return x.second->chain_id == chain_id;
-        })};
+        as_range::find_if(
+            kKnownChainConfigs,
+            [&chain_id](const std::pair<std::string, const ChainConfig*>& x) -> bool {
+                return x.second->chain_id == chain_id;
+            })};
 
     if (it == kKnownChainConfigs.end()) {
         return std::nullopt;
@@ -160,11 +162,14 @@ std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_cha
     return std::make_pair(it->first, it->second);
 }
 
-std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(const std::string_view identifier) noexcept {
+std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(
+    const std::string_view identifier) noexcept {
     auto it{
-        as_range::find_if(kKnownChainConfigs, [&identifier](const std::pair<std::string, const ChainConfig*>& x) -> bool {
-            return iequals(x.first, identifier);
-        })};
+        as_range::find_if(
+            kKnownChainConfigs,
+            [&identifier](const std::pair<std::string, const ChainConfig*>& x) -> bool {
+                return iequals(x.first, identifier);
+            })};
 
     if (it == kKnownChainConfigs.end()) {
         return std::nullopt;

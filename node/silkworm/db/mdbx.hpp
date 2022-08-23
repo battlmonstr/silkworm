@@ -55,7 +55,9 @@ class ROTxn {
     // This variant is just a wrapper over an external transaction.
     explicit ROTxn(mdbx::txn& external_txn) : external_txn_{&external_txn} {}
     // Move construction
-    ROTxn(ROTxn&& source) noexcept : external_txn_(source.external_txn_), managed_txn_(std::move(source.managed_txn_)) {}
+    ROTxn(ROTxn&& source) noexcept
+        : external_txn_(source.external_txn_),
+          managed_txn_(std::move(source.managed_txn_)) {}
 
     // Access to the underling raw mdbx transaction
     mdbx::txn& operator*() { return external_txn_ ? *external_txn_ : managed_txn_; }

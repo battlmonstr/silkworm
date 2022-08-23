@@ -61,13 +61,27 @@ struct Link {
 
 // An anchor is the bottom of a chain bundle that consists of one anchor and some chain links.
 struct Anchor {
-    Hash parentHash;                           // Hash of the header this anchor can be connected to (to disappear)
-    BlockNum blockHeight;                      // block height of the anchor
-    time_point_t timestamp;                    // request/arrival time
-    time_point_t prev_timestamp;               // Used to restore timestamp when a request fails for network reasons
-    int timeouts = 0;                          // Number of timeout that this anchor has experienced;after certain threshold,it gets invalidated
-    std::vector<std::shared_ptr<Link>> links;  // Links attached immediately to this anchor
-    BlockNum lastLinkHeight;                   // the blockHeight of the last link of the chain bundle anchored to this
+    // Hash of the header this anchor can be connected to (to disappear)
+    Hash parentHash;
+
+    // block height of the anchor
+    BlockNum blockHeight;
+
+    // request/arrival time
+    time_point_t timestamp;
+
+    // Used to restore timestamp when a request fails for network reasons
+    time_point_t prev_timestamp;
+
+    // Number of timeout that this anchor has experienced;after certain threshold,it gets invalidated
+    int timeouts = 0;
+
+    // Links attached immediately to this anchor
+    std::vector<std::shared_ptr<Link>> links;
+
+    // the blockHeight of the last link of the chain bundle anchored to this
+    BlockNum lastLinkHeight;
+
     PeerId peerId;
 
     Anchor(const BlockHeader& header, PeerId p) {
@@ -119,9 +133,14 @@ struct LinkYoungerThan : public std::function<bool(std::shared_ptr<Link>, std::s
 
 struct AnchorYoungerThan : public std::function<bool(std::shared_ptr<Link>, std::shared_ptr<Link>)> {
     bool operator()(const std::shared_ptr<Anchor>& x, const std::shared_ptr<Anchor>& y) const {
-        return x->timestamp != y->timestamp ? x->timestamp > y->timestamp :               // prefer smaller timestamp
-                   (x->blockHeight != y->blockHeight ? x->blockHeight > y->blockHeight :  // when timestamps are the same prioritise low blockHeight
-                        x > y);                                                           // when blockHeight are the same preserve identity
+        return x->timestamp != y->timestamp
+                   // prefer smaller timestamp
+                   ? x->timestamp > y->timestamp
+                   : (x->blockHeight != y->blockHeight
+                          // when timestamps are the same prioritise low blockHeight
+                          ? x->blockHeight > y->blockHeight
+                          // when blockHeight are the same preserve identity
+                          : x > y);
     }
 };
 
@@ -142,11 +161,17 @@ struct BlockOlderThan : public std::function<bool(BlockNum, BlockNum)> {
 // using OldestFirstLinkQueue = std::multimap<BlockNum, std::shared_ptr<Link>, BlockOlderThan>;
 
 }  // namespace silkworm
+
+// extract key type and value
 template <>
-struct mbpq_key<std::shared_ptr<silkworm::Link>> {                                          // extract key type and value
-    using type = silkworm::BlockNum;                                                        // type of the key
-    static type value(const std::shared_ptr<silkworm::Link>& l) { return l->blockHeight; }  // value of the key
+struct mbpq_key<std::shared_ptr<silkworm::Link>> {
+    // type of the key
+    using type = silkworm::BlockNum;
+
+    // value of the key
+    static type value(const std::shared_ptr<silkworm::Link>& l) { return l->blockHeight; }
 };
+
 namespace silkworm {  // reopen namespace
 
 using OldestFirstLinkMap = map_based_priority_queue<std::shared_ptr<Link>, BlockOlderThan>;
@@ -162,8 +187,10 @@ using YoungestFirstLinkQueue = set_based_priority_queue<std::shared_ptr<Link>,
 // We need a queue for anchors to get anchors in reverse order respect to timestamp
 // (that is the time at which we asked peers for ancestor of the anchor)
 using OldestFirstAnchorQueue = heap_based_priority_queue<std::shared_ptr<Anchor>,
-                                                         std::vector<std::shared_ptr<Anchor>>,  // inner impl
-                                                         AnchorYoungerThan>;                    // c++ heap is a max heap
+                                                         // inner impl
+                                                         std::vector<std::shared_ptr<Anchor>>,
+                                                         // c++ heap is a max heap
+                                                         AnchorYoungerThan>;
 // (note that go heap is a min heap)
 
 // Maps

@@ -22,6 +22,7 @@
 #include <silkworm/stagedsync/common.hpp>
 
 namespace silkworm::stagedsync {
+
 class SyncLoop final : public Worker {
   public:
     explicit SyncLoop(silkworm::NodeSettings* node_settings, mdbx::env* chaindata_env)
@@ -43,7 +44,11 @@ class SyncLoop final : public Worker {
     //! \brief Runs a full sync cycle
     [[nodiscard]] StageResult run_cycle_forward(db::RWTxn& cycle_txn, Timer& log_timer);
 
-    void throttle_next_cycle(const StopWatch::Duration& cycle_duration);  // Delays (if required) next cycle run
-    std::string get_log_prefix() const;                                   // Returns the current log lines prefix on behalf of current stage
+    // Delays (if required) next cycle run
+    void throttle_next_cycle(const StopWatch::Duration& cycle_duration);
+
+    // Returns the current log lines prefix on behalf of current stage
+    std::string get_log_prefix() const;
 };
+
 }  // namespace silkworm::stagedsync

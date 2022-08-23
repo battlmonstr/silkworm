@@ -18,7 +18,9 @@
 
 namespace silkworm::rpc {
 
-SendMessageToRandomPeers::SendMessageToRandomPeers(uint64_t max_peers, std::unique_ptr<sentry::OutboundMessageData> message)
+SendMessageToRandomPeers::SendMessageToRandomPeers(
+    uint64_t max_peers,
+    std::unique_ptr<sentry::OutboundMessageData> message)
     : UnaryCall("SendMessageToRandomPeers", &sentry::Sentry::Stub::SendMessageToRandomPeers, {}) {
     request_.set_max_peers(max_peers);
     request_.set_allocated_data(message.release());  // take ownership

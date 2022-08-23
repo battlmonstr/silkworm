@@ -106,9 +106,13 @@ void HeaderPersistence::persist(const BlockHeader& header) {  // try to modulari
     // Calculate total difficulty
     auto parent_td = db::read_total_difficulty(tx_, height - 1, header.parent_hash);
     if (!parent_td) {
-        std::string error_message = "HeaderPersistence: parent's total difficulty not found with hash " +
-                                    to_hex(header.parent_hash) + " and height " + std::to_string(height - 1) +
-                                    " for header " + hash.to_hex();
+        std::string error_message =
+            "HeaderPersistence: parent's total difficulty not found with hash " +
+            to_hex(header.parent_hash) +
+            " and height " +
+            std::to_string(height - 1) +
+            " for header " +
+            hash.to_hex();
         log::Error() << error_message;
         throw std::logic_error(error_message);  // unexpected condition, bug?
     }
@@ -200,7 +204,8 @@ void HeaderPersistence::update_canonical_chain(BlockNum height, Hash hash) {  //
     std::optional<Hash> persisted_canon_hash = db::read_canonical_hash(tx_, ancestor_height);
     while (!persisted_canon_hash ||
            std::memcmp(persisted_canon_hash.value().bytes, ancestor_hash.bytes, kHashLength) != 0) {
-        // while (persisted_canon_hash != ancestor_hash) { // better but gcc12 release erroneously raises a maybe-uninitialized warn
+        // better but gcc12 release erroneously raises a maybe-uninitialized warn
+        // while (persisted_canon_hash != ancestor_hash) {
         db::write_canonical_hash(tx_, ancestor_height, ancestor_hash);
 
         auto ancestor = db::read_header(tx_, ancestor_height, ancestor_hash);

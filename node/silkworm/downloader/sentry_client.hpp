@@ -41,36 +41,51 @@ class SentryClient : public rpc::Client<sentry::Sentry>, public ActiveComponent 
     using base_t = rpc::Client<sentry::Sentry>;
     using subscriber_t = std::function<void(const sentry::InboundMessage&)>;
 
-    explicit SentryClient(const std::string& sentry_addr);  // connect to the remote sentry
+    // connect to the remote sentry
+    explicit SentryClient(const std::string& sentry_addr);
     SentryClient(const SentryClient&) = delete;
     SentryClient(SentryClient&&) = delete;
 
-    void set_status(Hash head_hash, BigInt head_td, const ChainIdentity&);  // init the remote sentry
-    void hand_shake();                                                      // needed by the remote sentry, also check the protocol version
-    uint64_t count_active_peers();                                          // ask the remote sentry for active peers
+    // init the remote sentry
+    void set_status(Hash head_hash, BigInt head_td, const ChainIdentity&);
 
-    uint64_t active_peers();  // return cached peers count
+    // needed by the remote sentry, also check the protocol version
+    void hand_shake();
 
-    using base_t::exec_remotely;  // exec_remotely(SentryRpc& rpc) sends a rpc request to the remote sentry
+    // ask the remote sentry for active peers
+    uint64_t count_active_peers();
 
+    // return cached peers count
+    uint64_t active_peers();
+
+    // exec_remotely(SentryRpc& rpc) sends a rpc request to the remote sentry
+    using base_t::exec_remotely;
+
+    // enum values enable bit masking, for example: cope = BlockRequests & BlockAnnouncements
     enum Scope {
         BlockRequests = 0x01,
         BlockAnnouncements = 0x02,
         Other = 0x04
     };
-    // enum values enable bit masking, for example: cope = BlockRequests & BlockAnnouncements
 
-    void subscribe(Scope, subscriber_t callback);  // subscribe with sentry to receive messages
+    // subscribe with sentry to receive messages
+    void subscribe(Scope, subscriber_t callback);
 
-    /*[[long_running]]*/ void execution_loop() override;  // do a long-running loop to wait for messages
-    /*[[long_running]]*/ void stats_receiving_loop();     // do a long-running loop to wait for peer statistics
+    // do a long-running loop to wait for messages
+    /*[[long_running]]*/ void execution_loop() override;
 
-    static Scope scope(const sentry::InboundMessage& message);  // find the scope of the message
+    // do a long-running loop to wait for peer statistics
+    /*[[long_running]]*/ void stats_receiving_loop();
+
+    // find the scope of the message
+    static Scope scope(const sentry::InboundMessage& message);
 
   protected:
-    void publish(const sentry::InboundMessage&);  // notifying registered subscribers
+    // notifying registered subscribers
+    void publish(const sentry::InboundMessage&);
 
-    std::map<Scope, std::list<subscriber_t>> subscribers_;  // todo: optimize
+    // todo: optimize
+    std::map<Scope, std::list<subscriber_t>> subscribers_;
     std::atomic<uint64_t> active_peers_{0};
 };
 

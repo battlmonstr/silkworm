@@ -99,7 +99,8 @@ Penalty BodySequence::accept_requested_bodies(BlockBodiesPacket66& packet, const
             exact_request = body_requests_.find_by_hash(oh, tr);
 
             if (exact_request == body_requests_.end()) {
-                // penalty = BadBlockPenalty; // Erigon doesn't penalize the peer maybe because can be a late response but
+                // Erigon doesn't penalize the peer maybe because can be a late response but
+                // penalty = BadBlockPenalty;
                 //  todo: here we are sure it is not a late response, should we penalize the peer?
                 SILK_TRACE << "BodySequence: body rejected, no matching requests";
                 statistics_.reject_causes.not_requested += 1;

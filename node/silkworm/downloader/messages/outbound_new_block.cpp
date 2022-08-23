@@ -55,7 +55,8 @@ sentry::SentPeers OutboundNewBlock::send_packet(SentryClient& sentry, const NewB
     rlp::encode(rlp_encoding, packet);
     request->set_data(rlp_encoding.data(), rlp_encoding.length());  // copy
 
-    SILK_TRACE << "Sending message OutboundNewBlock (announcements) with send_message_to_random_peers, content:" << packet;
+    SILK_TRACE << "Sending message OutboundNewBlock (announcements) with send_message_to_random_peers, content:"
+               << packet;
 
     rpc::SendMessageToRandomPeers rpc{kMaxPeers, std::move(request)};
 

@@ -225,7 +225,8 @@ inline constexpr ChainConfig kSepoliaConfig{
 std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(uint64_t chain_id) noexcept;
 
 //! \brief Looks up a known chain config provided its chain identifier (eg. "mainnet")
-std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(std::string_view identifier) noexcept;
+std::optional<std::pair<const std::string, const ChainConfig*>> lookup_known_chain(
+    std::string_view identifier) noexcept;
 
 //! \brief Returns a map known chains names mapped to their respective chain ids
 std::map<std::string, uint64_t> get_known_chains_map() noexcept;

@@ -72,12 +72,18 @@ class BodySequence {
     [[nodiscard]] const Download_Statistics& statistics() const;
 
     // downloading process tuning parameters
-    static /*constexpr*/ seconds_t kRequestDeadline;             // = std::chrono::seconds(30);
-                                                                 // after this a response is considered lost it is related to Sentry's peerDeadline
-    static /*constexpr*/ milliseconds_t kNoPeerDelay;            // = std::chrono::milliseconds(500);
-                                                                 // delay when no peer accepted the last request
+
+    // after this a response is considered lost it is related to Sentry's peerDeadline
+    static /*constexpr*/ seconds_t kRequestDeadline;  // = std::chrono::seconds(30);
+
+    // delay when no peer accepted the last request
+    static /*constexpr*/ milliseconds_t kNoPeerDelay;  // = std::chrono::milliseconds(500);
+
     static /*constexpr*/ size_t kPerPeerMaxOutstandingRequests;  // = 4;
-    static /*constexpr*/ BlockNum kMaxBlocksPerMessage;          // = 128;               // go-ethereum client acceptance limit
+
+    // go-ethereum client acceptance limit
+    static /*constexpr*/ BlockNum kMaxBlocksPerMessage;  // = 128;
+
     static constexpr BlockNum kMaxAnnouncedBlocks = 10000;
 
   protected:

@@ -116,14 +116,34 @@ int main(int argc, char* argv[]) {
 
         // Output BuildInfo
         auto build_info{silkworm_get_buildinfo()};
-        log::Message("SILKWORM DOWNLOADER", {"version", std::string(build_info->git_branch) + std::string(build_info->project_version),
-                                             "build", std::string(build_info->system_name) + "-" + std::string(build_info->system_processor) + " " + std::string(build_info->build_type),
-                                             "compiler", std::string(build_info->compiler_id) + " " + std::string(build_info->compiler_version)});
+        log::Message(
+            "SILKWORM DOWNLOADER",
+            {"version",
+             std::string(build_info->git_branch) +
+                 std::string(build_info->project_version),
+             "build",
+             std::string(build_info->system_name) +
+                 "-" +
+                 std::string(build_info->system_processor) +
+                 " " +
+                 std::string(build_info->build_type),
+             "compiler",
+             std::string(build_info->compiler_id) +
+                 " " +
+                 std::string(build_info->compiler_version)});
 
-        log::Message("BlockExchange parameter", {"--max_blocks_per_req", to_string(BodySequence::kMaxBlocksPerMessage)});
-        log::Message("BlockExchange parameter", {"--max_requests_per_peer", to_string(BodySequence::kPerPeerMaxOutstandingRequests)});
-        log::Message("BlockExchange parameter", {"--request_deadline_s", to_string(requestDeadlineSeconds)});
-        log::Message("BlockExchange parameter", {"--no_peer_delay_ms", to_string(noPeerDelayMilliseconds)});
+        log::Message(
+            "BlockExchange parameter",
+            {"--max_blocks_per_req", to_string(BodySequence::kMaxBlocksPerMessage)});
+        log::Message(
+            "BlockExchange parameter",
+            {"--max_requests_per_peer", to_string(BodySequence::kPerPeerMaxOutstandingRequests)});
+        log::Message(
+            "BlockExchange parameter",
+            {"--request_deadline_s", to_string(requestDeadlineSeconds)});
+        log::Message(
+            "BlockExchange parameter",
+            {"--no_peer_delay_ms", to_string(noPeerDelayMilliseconds)});
 
         // Prepare database
         cmd::run_preflight_checklist(node_settings);

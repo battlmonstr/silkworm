@@ -116,7 +116,10 @@ sentry::SentPeers OutboundGetBlockHeaders::send_packet(SentryClient& sentry,
     return peers;
 }
 
-void OutboundGetBlockHeaders::send_penalization(SentryClient& sentry, const PeerPenalization& penalization, seconds_t timeout) {
+void OutboundGetBlockHeaders::send_penalization(
+    SentryClient& sentry,
+    const PeerPenalization& penalization,
+    seconds_t timeout) {
     rpc::PenalizePeer rpc{penalization.peerId, penalization.penalty};
 
     rpc.timeout(timeout);

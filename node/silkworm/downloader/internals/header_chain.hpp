@@ -93,7 +93,10 @@ class HeaderChain {
     // core functionalities: process receiving headers
     // when a remote peer satisfy our request we receive one or more headers that will be processed
     using RequestMoreHeaders = bool;
-    auto accept_headers(const std::vector<BlockHeader>&, uint64_t requestId, const PeerId&) -> std::tuple<Penalty, RequestMoreHeaders>;
+    auto accept_headers(
+        const std::vector<BlockHeader>&,
+        uint64_t requestId,
+        const PeerId&) -> std::tuple<Penalty, RequestMoreHeaders>;
 
     // core functionalities: persist new headers that have persisted parent
     auto withdraw_stable_headers() -> Headers;
@@ -151,15 +154,28 @@ class HeaderChain {
     void extend_up(std::shared_ptr<Link>, Segment::Slice);
     auto new_anchor(Segment::Slice, PeerId) -> RequestMoreHeaders;
 
-    OldestFirstAnchorQueue anchor_queue_;      // Priority queue of anchors used to sequence the header requests
-    LinkMap links_;                            // Links by header hash
-    AnchorMap anchors_;                        // Mapping from parentHash to collection of anchors
-    OldestFirstLinkMap persisted_link_queue_;  // Priority queue of persisted links used to limit their number
-    OldestFirstLinkQueue insert_list_;         // List of non-persisted links that can be inserted (their parent is persisted)
+    // Priority queue of anchors used to sequence the header requests
+    OldestFirstAnchorQueue anchor_queue_;
+
+    // Links by header hash
+    LinkMap links_;
+
+    // Mapping from parentHash to collection of anchors
+    AnchorMap anchors_;
+
+    // Priority queue of persisted links used to limit their number
+    OldestFirstLinkMap persisted_link_queue_;
+
+    // List of non-persisted links that can be inserted (their parent is persisted)
+    OldestFirstLinkQueue insert_list_;
+
     BlockNum highest_in_db_;
     BlockNum top_seen_height_;
     std::set<Hash> bad_headers_;
-    const PreverifiedHashes* preverified_hashes_;  // Set of hashes that are known to belong to canonical chain
+
+    // Set of hashes that are known to belong to canonical chain
+    const PreverifiedHashes* preverified_hashes_;
+
     using Ignore = int;
     lru_cache<Hash, Ignore> seen_announces_;
     std::vector<Announce> announces_to_do_;
