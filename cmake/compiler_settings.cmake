@@ -102,6 +102,9 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang$")
     add_compile_options(-gline-tables-only)
   endif()
 
+  # TODO
+  include_directories("/Applications/CLion.app/Contents/bin/clang/mac/include")
+
   # coroutines support
   if(NOT SILKWORM_WASM_API)
     add_compile_options(-stdlib=libc++)
