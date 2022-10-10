@@ -17,6 +17,8 @@
 find_package(Catch2 REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
 
+find_package(absl REQUIRED)
+
 # Silkworm Core Tests
 file(GLOB_RECURSE SILKWORM_CORE_TESTS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/core/silkworm/*_test.cpp")
 add_executable(core_test unit_test.cpp ${SILKWORM_CORE_TESTS})
