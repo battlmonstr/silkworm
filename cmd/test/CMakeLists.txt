@@ -14,13 +14,13 @@
    limitations under the License.
 ]]
 
-find_package(Catch2 CONFIG REQUIRED)
-find_package(Microsoft.GSL CONFIG REQUIRED)
+find_package(Catch2 REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
 
 # Silkworm Core Tests
 file(GLOB_RECURSE SILKWORM_CORE_TESTS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/core/silkworm/*_test.cpp")
 add_executable(core_test unit_test.cpp ${SILKWORM_CORE_TESTS})
-target_link_libraries(core_test silkworm_core Catch2::Catch2 evmone)
+target_link_libraries(core_test silkworm_core Catch2::Catch2 evmone absl::flat_hash_map absl::flat_hash_set absl::node_hash_map)
 if(MSVC)
   target_compile_options(core_test PRIVATE /EHa- /EHsc)
 else()
@@ -37,8 +37,8 @@ if(NOT SILKWORM_CORE_ONLY)
   target_link_libraries(node_test silkworm_node Catch2::Catch2)
 
   # Ethereum Consensus Tests
-  hunter_add_package(CLI11)
-  find_package(CLI11 CONFIG REQUIRED)
+  #hunter_add_package(CLI11)
+  find_package(CLI11 REQUIRED)
   add_executable(consensus consensus.cpp)
   target_compile_definitions(consensus PRIVATE SILKWORM_CONSENSUS_TEST_DIR="${CMAKE_SOURCE_DIR}/third_party/tests")
   target_link_libraries(consensus PRIVATE silkworm_node evmc::loader CLI11::CLI11)

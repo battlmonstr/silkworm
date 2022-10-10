@@ -16,11 +16,11 @@
 
 # Find Protobuf installation
 set(protobuf_MODULE_COMPATIBLE TRUE)
-find_package(Protobuf CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 find_program(PROTOBUF_PROTOC protoc REQUIRED)
 
 # Find gRPC installation
-find_package(gRPC CONFIG REQUIRED)
+find_package(gRPC REQUIRED)
 find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin REQUIRED)
 
 set(PROTO_PATH "${CMAKE_CURRENT_SOURCE_DIR}/proto")

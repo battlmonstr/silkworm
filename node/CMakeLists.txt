@@ -14,11 +14,11 @@
    limitations under the License.
 ]]
 
-find_package(absl CONFIG REQUIRED)
-find_package(asio-grpc CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED container thread)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+find_package(absl REQUIRED)
+find_package(asio-grpc REQUIRED)
+find_package(Boost REQUIRED thread)
+find_package(nlohmann_json REQUIRED)
+find_package(gRPC REQUIRED)
 
 get_filename_component(SILKWORM_MAIN_DIR ../ ABSOLUTE)
 

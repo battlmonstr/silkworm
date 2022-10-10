@@ -17,6 +17,49 @@
 # ethash requires cmake 3.16.2
 cmake_minimum_required(VERSION 3.16.2)
 
+# ---------------------------------------------------------------------------------------------------------------------
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+  message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+  file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
+          "${CMAKE_BINARY_DIR}/conan.cmake"
+          TLS_VERIFY ON)
+endif()
+
+include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+conan_cmake_configure(REQUIRES  abseil/20211102.0 
+                                asio-grpc/2.0.0 
+                                benchmark/1.6.1
+                                boost/1.80.0 
+                                catch2/2.13.9 
+                                cli11/2.2.0 
+                                grpc/1.48.0 
+                                ms-gsl/4.0.0 
+                                nlohmann_json/3.10.5 
+                                openssl/1.1.1q 
+                                protobuf/3.21.4 
+                                snappy/1.1.9 
+                                zlib/1.2.12 
+                                 
+        GENERATORS cmake_find_package) # cmake cmake_paths make
+
+#conan_cmake_autodetect(settings)
+#message(STATUS "CONAN CMAKE AUTODETECT SETTINGS: ${settings}")
+
+conan_cmake_install(PATH_OR_REFERENCE .
+        BUILD missing
+        REMOTE conancenter
+        #SETTINGS ${settings}
+        PROFILE a1) #PROFILE a1
+        
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/evmone/evmc/.git)
   message(FATAL_ERROR "Git submodules not initialized, execute:\n  git submodule update --init --recursive")
 endif()
@@ -173,7 +216,7 @@ endif()
 
 # libtorrent
 if(NOT SILKWORM_CORE_ONLY)
-  find_package(Boost CONFIG REQUIRED)
+  find_package(Boost REQUIRED)
   # Define Boost::headers target if missing because libtorrent needs it
   if(NOT TARGET Boost::headers)
     add_library(Boost::headers INTERFACE IMPORTED)
