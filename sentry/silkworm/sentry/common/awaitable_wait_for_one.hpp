@@ -30,7 +30,7 @@
 #include <boost/asio/completion_condition.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/cancellation_condition.hpp>
-#include <boost/asio/experimental/deferred.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/multiple_exceptions.hpp>
 #include <boost/asio/this_coro.hpp>
@@ -46,7 +46,7 @@ using awaitable = boost::asio::awaitable<T, Executor>;
 template <typename Executor = boost::asio::any_io_executor>
 using use_awaitable_t = boost::asio::use_awaitable_t<Executor>;
 
-using boost::asio::experimental::deferred;
+using boost::asio::deferred;
 
 namespace this_coro {
     using boost::asio::this_coro::executor;

@@ -22,6 +22,8 @@ cmake_minimum_required(VERSION 3.16.2)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
+add_definitions("-std=c++20")
+
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
@@ -53,8 +55,8 @@ conan_cmake_configure(REQUIRES  abseil/20211102.0
 conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
         REMOTE conancenter
-        #SETTINGS ${settings}
-        PROFILE a1) #PROFILE a1
+        SETTINGS os=Linux;os_build=Linux;arch=x86_64;arch_build=x86_64;compiler=gcc;compiler.version=11;compiler.libcxx=libstdc++11;build_type=Release)
+        #PROFILE a1) #PROFILE a1
         
 
 # ---------------------------------------------------------------------------------------------------------------------
