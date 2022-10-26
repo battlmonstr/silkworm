@@ -19,6 +19,8 @@ cmake_minimum_required(VERSION 3.16.2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+message("CONAN_PROFILE: ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}")
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
@@ -55,9 +57,8 @@ conan_cmake_configure(REQUIRES  abseil/20211102.0
 conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
         REMOTE conancenter
-        SETTINGS os=Linux;os_build=Linux;arch=x86_64;arch_build=x86_64;compiler=gcc;compiler.version=11;compiler.libcxx=libstdc++11;build_type=Release)
-        #PROFILE a1) #PROFILE a1
-        
+        #SETTINGS os=Linux;os_build=Linux;arch=x86_64;arch_build=x86_64;compiler=gcc;compiler.version=11;compiler.libcxx=libstdc++11;build_type=Release)
+        PROFILE ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}) #PROFILE a1    
 
 # ---------------------------------------------------------------------------------------------------------------------
 
