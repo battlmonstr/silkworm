@@ -51,14 +51,29 @@ conan_cmake_configure(REQUIRES  abseil/20211102.0
                                  
         GENERATORS cmake_find_package) # cmake cmake_paths make
 
-#conan_cmake_autodetect(settings)
-#message(STATUS "CONAN CMAKE AUTODETECT SETTINGS: ${settings}")
+if(NOT DEFINED ${CONAN_PROFILE})
 
-conan_cmake_install(PATH_OR_REFERENCE .
+  conan_cmake_autodetect(settings)
+
+  message(STATUS "CONAN_PROFILE not defined. Use autodetect settings: ${settings}")
+
+  conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
         REMOTE conancenter
-        #SETTINGS os=Linux;os_build=Linux;arch=x86_64;arch_build=x86_64;compiler=gcc;compiler.version=11;compiler.libcxx=libstdc++11;build_type=Release)
-        PROFILE ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}) #PROFILE a1    
+        SETTINGS ${settings})
+
+else()    
+
+  message(STATUS "CONAN_PROFILE: ${CONAN_PROFILE}")
+
+  conan_cmake_install(PATH_OR_REFERENCE .
+        BUILD missing
+        REMOTE conancenter
+        PROFILE ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE})
+
+endif()
+
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 
