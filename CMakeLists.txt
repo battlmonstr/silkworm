@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.16.2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-message("CONAN_PROFILE: ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}")
+#message("CONAN_PROFILE: ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -51,11 +51,11 @@ conan_cmake_configure(REQUIRES  abseil/20211102.0
                                  
         GENERATORS cmake_find_package) # cmake cmake_paths make
 
-if(NOT DEFINED ${CONAN_PROFILE})
+if(NOT DEFINED CONAN_PROFILE)
+
+  message(STATUS "CONAN_PROFILE not defined. Use autodetect settings...")
 
   conan_cmake_autodetect(settings)
-
-  message(STATUS "CONAN_PROFILE not defined. Use autodetect settings: ${settings}")
 
   conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
