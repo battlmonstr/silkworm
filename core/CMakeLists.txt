@@ -14,8 +14,13 @@
    limitations under the License.
 ]]
 
-find_package(Microsoft.GSL REQUIRED)
-find_package(nlohmann_json REQUIRED)
+if(CONAN_PACKAGE_MANAGER)
+  find_package(Microsoft.GSL REQUIRED)
+  find_package(nlohmann_json REQUIRED)
+else()
+  find_package(Microsoft.GSL CONFIG REQUIRED)
+  find_package(nlohmann_json CONFIG REQUIRED)
+endif()
 
 if(MSVC)
   add_compile_options(/EHsc)
@@ -33,7 +38,9 @@ set(SILKWORM_CORE_PUBLIC_LIBS ethash::ethash evmc evmone intx::intx Microsoft.GS
 set(SILKWORM_CORE_PRIVATE_LIBS "")
 
 if(NOT SILKWORM_WASM_API)
-  #hunter_add_package(abseil)
+  if(NOT CONAN_PACKAGE_MANAGER)
+    hunter_add_package(abseil)
+  endif()
   find_package(absl REQUIRED)
   list(APPEND SILKWORM_CORE_PRIVATE_LIBS absl::flat_hash_map absl::flat_hash_set absl::node_hash_map)
 endif()
