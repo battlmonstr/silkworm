@@ -21,6 +21,7 @@ if(CONAN_PACKAGE_MANAGER)
   find_package(Boost REQUIRED thread)
   find_package(nlohmann_json REQUIRED)
   find_package(gRPC REQUIRED)
+  find_package(benchmark REQUIRED)
 else()
   find_package(absl CONFIG REQUIRED)
   find_package(asio-grpc CONFIG REQUIRED)
@@ -73,8 +74,14 @@ target_include_directories(silkworm_node PUBLIC
         ${SILKWORM_MAIN_DIR}/third_party/magic_enum/include
         ${SILKWORM_MAIN_DIR}/third_party/libtorrent/include)
 
-set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
+if(CONAN_PACKAGE_MANAGER)
+  set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
+        nlohmann_json::nlohmann_json gRPC::grpc++ protobuf::libprotobuf Boost::container Boost::thread asio-grpc::asio-grpc torrent-rasterbar benchmark::benchmark)
+else()
+  set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
         nlohmann_json::nlohmann_json gRPC::grpc++ protobuf::libprotobuf Boost::container Boost::thread asio-grpc::asio-grpc torrent-rasterbar)
+endif()
+
 set(SILKWORM_NODE_PRIVATE_LIBS cborcpp evmone)
 
 if(MSVC)

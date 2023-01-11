@@ -40,7 +40,7 @@ if(CONAN_PACKAGE_MANAGER) # CMAKE CONAN START
   conan_cmake_configure(REQUIRES  abseil/20211102.0
                                   asio-grpc/2.0.0
                                   benchmark/1.6.1
-                                  boost/1.80.0
+                                  boost/1.78.0
                                   catch2/2.13.9
                                   cli11/2.2.0
                                   grpc/1.48.0
