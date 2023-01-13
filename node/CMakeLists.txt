@@ -36,6 +36,7 @@ get_filename_component(SILKWORM_MAIN_DIR ../ ABSOLUTE)
 
 file(GLOB_RECURSE SILKWORM_NODE_SRC CONFIGURE_DEPENDS "*.cpp" "*.hpp" "*.c" "*.h" "*.cc")
 list(FILTER SILKWORM_NODE_SRC EXCLUDE REGEX "_test\\.cpp$")
+list(FILTER SILKWORM_NODE_SRC EXCLUDE REGEX "_benchmark\\.cpp$")
 
 set(SILKWORM_INTERFACE_SRC
         ${SILKWORM_MAIN_DIR}/interfaces/p2psentry/sentry.grpc.pb.cc
@@ -74,13 +75,8 @@ target_include_directories(silkworm_node PUBLIC
         ${SILKWORM_MAIN_DIR}/third_party/magic_enum/include
         ${SILKWORM_MAIN_DIR}/third_party/libtorrent/include)
 
-if(CONAN_PACKAGE_MANAGER)
-  set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
-        nlohmann_json::nlohmann_json gRPC::grpc++ protobuf::libprotobuf Boost::container Boost::thread asio-grpc::asio-grpc torrent-rasterbar benchmark::benchmark)
-else()
-  set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
+set(SILKWORM_NODE_PUBLIC_LIBS silkworm_core mdbx-static absl::flat_hash_map absl::flat_hash_set absl::btree roaring
         nlohmann_json::nlohmann_json gRPC::grpc++ protobuf::libprotobuf Boost::container Boost::thread asio-grpc::asio-grpc torrent-rasterbar)
-endif()
 
 set(SILKWORM_NODE_PRIVATE_LIBS cborcpp evmone)
 
