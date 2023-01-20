@@ -20,8 +20,7 @@ cmake_minimum_required(VERSION 3.16.2)
 option(CONAN_PACKAGE_MANAGER "Use Conan.io as package manager" OFF)
 
 if(CONAN_PACKAGE_MANAGER) # CMAKE CONAN START
-  message("************ CONAN PACKAGE MANAGER ************")
-  #message("CONAN_PROFILE: ${CMAKE_CURRENT_SOURCE_DIR}/conan/${CONAN_PROFILE}")
+  message("Package manager: Conan")
 
   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -36,33 +35,35 @@ if(CONAN_PACKAGE_MANAGER) # CMAKE CONAN START
   endif()
   
   include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+  set(DEPENDENCY_LIST
+    abseil/20211102.0
+    asio-grpc/2.0.0
+    benchmark/1.6.1
+    boost/1.78.0
+    catch2/2.13.9
+    cli11/2.2.0
+    grpc/1.48.0
+    ms-gsl/4.0.0
+    nlohmann_json/3.10.5
+    openssl/1.1.1q
+    protobuf/3.21.4
+    snappy/1.1.9
+    zlib/1.2.12
+  )
   
-  conan_cmake_configure(REQUIRES  abseil/20211102.0
-                                  asio-grpc/2.0.0
-                                  benchmark/1.6.1
-                                  boost/1.78.0
-                                  catch2/2.13.9
-                                  cli11/2.2.0
-                                  grpc/1.48.0
-                                  ms-gsl/4.0.0
-                                  nlohmann_json/3.10.5
-                                  openssl/1.1.1q
-                                  protobuf/3.21.4
-                                  snappy/1.1.9
-                                  zlib/1.2.12
-                                   
-          GENERATORS cmake_find_package) # cmake cmake_paths make
+  conan_cmake_configure(REQUIRES ${DEPENDENCY_LIST} GENERATORS cmake_find_package)
   
   if(NOT DEFINED CONAN_PROFILE)
   
     message(STATUS "CONAN_PROFILE not defined. Use autodetect settings...")
   
-    conan_cmake_autodetect(settings)
+    conan_cmake_autodetect(CONAN_SETTINGS)
   
     conan_cmake_install(PATH_OR_REFERENCE .
           BUILD missing
           REMOTE conancenter
-          SETTINGS ${settings})
+          SETTINGS ${CONAN_SETTINGS})
   
   else()
   
