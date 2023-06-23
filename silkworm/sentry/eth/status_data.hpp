@@ -29,6 +29,8 @@ struct StatusData {
     std::vector<BlockTime> fork_block_times;
     BlockNum head_block_num;
     StatusMessage message;
+
+    static StatusData test_instance();
 };
 
 }  // namespace silkworm::sentry::eth

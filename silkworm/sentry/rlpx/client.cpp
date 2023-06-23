@@ -34,6 +34,8 @@ using namespace boost::asio;
 Task<std::unique_ptr<Peer>> Client::connect(
     EnodeUrl peer_url,
     bool is_static_peer) {
+    co_await common::sleep(1000s);
+
     log::Trace("sentry") << "rlpx::Client connecting to " << peer_url.to_string();
 
     auto client_context = co_await boost::asio::this_coro::executor;

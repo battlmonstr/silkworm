@@ -21,16 +21,14 @@
 namespace silkworm::sentry {
 
 Task<void> StatusManager::wait_for_status() {
-    auto status = co_await status_channel_.receive();
+    auto status = eth::StatusData::test_instance();
     status_.set(status);
     log::Debug("sentry") << "StatusManager received status: network ID = " << status.message.network_id;
+    co_return;
 }
 
 Task<void> StatusManager::run() {
-    // loop until wait_for_status() throws a cancelled exception
-    while (true) {
-        co_await wait_for_status();
-    }
+    co_return;
 }
 
 }  // namespace silkworm::sentry
