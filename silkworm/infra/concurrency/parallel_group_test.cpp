@@ -20,17 +20,14 @@
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/basic_waitable_timer.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <catch2/catch.hpp>
-
-#include "awaitable_wait_for_all.hpp"
 
 using namespace boost::asio;
 using namespace boost::asio::experimental;
@@ -38,8 +35,8 @@ using namespace std::chrono_literals;
 
 awaitable<void> sleep(std::chrono::milliseconds duration) {
     auto executor = co_await this_coro::executor;
-    deadline_timer timer(executor);
-    timer.expires_from_now(boost::posix_time::milliseconds(duration.count()));
+    basic_waitable_timer<std::chrono::system_clock> timer(executor);
+    timer.expires_from_now(duration);
     co_await timer.async_wait(use_awaitable);
 }
 
@@ -67,7 +64,9 @@ awaitable<void> run() {
     auto executor = co_await this_coro::executor;
     auto strand = make_strand(executor);
 
-    co_await (sleep(1s) && spawn_throw_op(strand) && spawn_noop_loop(strand));
+    try {
+        co_await (sleep(1s) && spawn_throw_op(strand) && spawn_noop_loop(strand));
+    } catch (std::runtime_error&) {}
 }
 
 TEST_CASE("parallel_group.co_spawn_cancellation_handler_bug") {
