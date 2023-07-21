@@ -187,7 +187,7 @@ Task<void> SentryImpl::run_tasks() {
         start_status_manager() &&
         start_server() &&
         start_discovery() &&
-        start_peer_manager() &&
+        //start_peer_manager() &&
         start_message_sender() &&
         start_message_receiver() &&
         start_peer_manager_api() &&

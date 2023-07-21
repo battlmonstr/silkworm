@@ -86,7 +86,7 @@ NodeImpl::NodeImpl(Settings& settings, SentryClientPtr sentry_client, mdbx::env&
     backend_ = std::make_unique<EthereumBackEnd>(settings_, &chaindata_db_, sentry_client_);
     backend_->set_node_name(settings_.node_name);
     backend_kv_rpc_server_ = std::make_unique<rpc::BackEndKvServer>(settings.server_settings, *backend_);
-    bittorrent_client_ = std::make_unique<BitTorrentClient>(settings_.snapshot_settings.bittorrent_settings);
+    //bittorrent_client_ = std::make_unique<BitTorrentClient>(settings_.snapshot_settings.bittorrent_settings);
 }
 
 void NodeImpl::setup() {

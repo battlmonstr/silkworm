@@ -105,7 +105,7 @@ class TaskGroup {
 
     std::mutex mutex_;
     bool is_closed_{false};
-    std::size_t last_task_id_{0};
+    [[maybe_unused]] std::size_t last_task_id_{0};
     std::map<std::size_t, boost::asio::cancellation_signal> tasks_;
     concurrency::Channel<std::size_t> completions_;
 };

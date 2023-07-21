@@ -23,6 +23,7 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/this_coro.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/system/errc.hpp>
 #include <boost/system/system_error.hpp>
 
@@ -33,6 +34,10 @@ namespace silkworm::concurrency {
 using namespace boost::asio;
 
 void TaskGroup::spawn(any_io_executor&& executor, awaitable<void> task) {
+    co_spawn(executor, std::move(task), boost::asio::detached);
+}
+/*
+void TaskGroup::spawn2(any_io_executor&& executor, awaitable<void> task) {
     std::scoped_lock lock(mutex_);
 
     if (is_closed_) {
@@ -53,7 +58,7 @@ void TaskGroup::spawn(any_io_executor&& executor, awaitable<void> task) {
     };
 
     co_spawn(executor, std::move(task), bind_cancellation_slot(cancellation_slot, completion));
-}
+}*/
 
 awaitable<void> TaskGroup::wait() {
     // wait until cancelled

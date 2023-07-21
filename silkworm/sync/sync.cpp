@@ -82,7 +82,7 @@ boost::asio::awaitable<void> Sync::async_run() {
 
 boost::asio::awaitable<void> Sync::run_tasks() {
     using namespace concurrency::awaitable_wait_for_all;
-    co_await (start_sync_sentry_client() && start_block_exchange() && start_chain_sync());
+    co_await (start_sync_sentry_client());// && start_block_exchange() && start_chain_sync());
 }
 
 boost::asio::awaitable<void> Sync::start_sync_sentry_client() {
