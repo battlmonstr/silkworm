@@ -167,7 +167,7 @@ Task<void> SentryImpl::run() {
     public_ip_ = co_await nat::ip_resolver(settings_.nat);
     log::Info("sentry") << "Node URL: " << make_node_url().to_string();
 
-    co_await (run_tasks() && start_grpc_server());
+    co_await (run_tasks());
 }
 
 void SentryImpl::setup_node_key() {
@@ -183,15 +183,8 @@ Task<void> SentryImpl::run_tasks() {
     co_await status_manager_.wait_for_status();
     log::Info("sentry") << "Sentry received initial status message";
 
-    co_await (
-        start_status_manager() &&
-        start_server() &&
-        start_discovery() &&
-        //start_peer_manager() &&
-        start_message_sender() &&
-        start_message_receiver() &&
-        start_peer_manager_api() &&
-        run_peer_discovery_feedback());
+    co_await
+        start_discovery();
 }
 
 std::unique_ptr<rlpx::Protocol> SentryImpl::make_protocol() {
