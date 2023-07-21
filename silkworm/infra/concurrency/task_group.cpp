@@ -22,8 +22,8 @@
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/this_coro.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/system/errc.hpp>
 #include <boost/system/system_error.hpp>
 

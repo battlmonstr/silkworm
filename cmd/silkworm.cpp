@@ -360,7 +360,7 @@ int main(int argc, char* argv[]) {
         }
 
         auto tasks =
-            //execution_node.run() &&
+            // execution_node.run() &&
             embedded_sentry_run_if_needed() &&
             chain_sync_process.async_run();
 

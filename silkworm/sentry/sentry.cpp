@@ -183,8 +183,7 @@ Task<void> SentryImpl::run_tasks() {
     co_await status_manager_.wait_for_status();
     log::Info("sentry") << "Sentry received initial status message";
 
-    co_await
-        start_discovery();
+    co_await start_discovery();
 }
 
 std::unique_ptr<rlpx::Protocol> SentryImpl::make_protocol() {

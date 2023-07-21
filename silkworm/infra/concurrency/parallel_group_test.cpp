@@ -14,22 +14,21 @@
    limitations under the License.
 */
 
-#include <catch2/catch.hpp>
-
 #include <chrono>
 #include <stdexcept>
 
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/awaitable.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
-#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/asio/co_spawn.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <catch2/catch.hpp>
 
 #include "awaitable_wait_for_all.hpp"
 

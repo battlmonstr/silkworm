@@ -16,10 +16,10 @@
 
 #include "discovery.hpp"
 
-#include <boost/signals2.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
+#include <boost/signals2.hpp>
 
 #include <silkworm/infra/common/log.hpp>
 #include <silkworm/infra/concurrency/awaitable_wait_for_all.hpp>
@@ -73,7 +73,7 @@ class DiscoveryImpl : private MessageHandler {
         auto strand = make_strand(executor);
 
         co_await (sleep(1s) && discover_more(strand) && periodic_ping_check2(strand));
-        //co_await (server_.run() && discover_more() && periodic_ping_check());
+        // co_await (server_.run() && discover_more() && periodic_ping_check());
     }
 
     void discover_more_needed() {
@@ -122,9 +122,9 @@ class DiscoveryImpl : private MessageHandler {
                 continue;
             }
 
-//            for (auto& node_id : node_ids) {
-//                co_await ping::ping_check(node_id, std::nullopt, local_node_url, server_, on_pong_signal_, node_db_);
-//            }
+            //            for (auto& node_id : node_ids) {
+            //                co_await ping::ping_check(node_id, std::nullopt, local_node_url, server_, on_pong_signal_, node_db_);
+            //            }
         }
     }
 

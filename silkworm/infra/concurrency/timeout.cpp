@@ -16,13 +16,14 @@
 
 #include "timeout.hpp"
 
-#include "../common/log.hpp"
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/system/errc.hpp>
 #include <boost/system/system_error.hpp>
+
+#include "../common/log.hpp"
 
 namespace silkworm::concurrency {
 

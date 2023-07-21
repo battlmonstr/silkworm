@@ -79,7 +79,6 @@ DiscoveryImpl::DiscoveryImpl(
 }
 
 Task<void> DiscoveryImpl::run() {
-
     if (with_dynamic_discovery_) {
         co_await disc_v4_discovery_.run();
     }
