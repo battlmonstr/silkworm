@@ -16,6 +16,7 @@
 
 #include "timeout.hpp"
 
+#include "../common/log.hpp"
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -39,7 +40,26 @@ boost::asio::awaitable<void> timeout(std::chrono::milliseconds duration) {
         throw;
     }
 
+    log::Debug() << "TimeoutExpiredError";
     throw TimeoutExpiredError();
+}
+
+boost::asio::awaitable<void> timeout(std::chrono::milliseconds duration, const char* msg) {
+    auto executor = co_await boost::asio::this_coro::executor;
+    boost::asio::deadline_timer timer(executor);
+    timer.expires_from_now(boost::posix_time::milliseconds(duration.count()));
+
+    try {
+        co_await timer.async_wait(boost::asio::use_awaitable);
+    } catch (const boost::system::system_error& ex) {
+        // if the timeout is cancelled before expiration - it is not an error
+        if (ex.code() == boost::system::errc::operation_canceled)
+            co_return;
+        throw;
+    }
+
+    log::Debug() << "TimeoutExpiredError " << msg;
+    throw TimeoutExpiredError(msg);
 }
 
 }  // namespace silkworm::concurrency

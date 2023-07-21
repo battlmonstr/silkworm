@@ -26,10 +26,12 @@
 namespace silkworm::concurrency {
 
 boost::asio::awaitable<void> timeout(std::chrono::milliseconds duration);
+boost::asio::awaitable<void> timeout(std::chrono::milliseconds duration, const char* msg);
 
 class TimeoutExpiredError : public std::runtime_error {
   public:
     TimeoutExpiredError() : std::runtime_error("Timeout has expired") {}
+    TimeoutExpiredError(const char* msg) : std::runtime_error(msg) {}
 };
 
 }  // namespace silkworm::concurrency
