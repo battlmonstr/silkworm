@@ -17,6 +17,9 @@
 #include "discovery.hpp"
 
 #include <boost/signals2.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/this_coro.hpp>
 
 #include <silkworm/infra/common/log.hpp>
 #include <silkworm/infra/concurrency/awaitable_wait_for_all.hpp>
@@ -31,6 +34,19 @@
 #include "server.hpp"
 
 namespace silkworm::sentry::discovery::disc_v4 {
+
+using namespace boost::asio;
+
+Task<void> noop() {
+    co_return;
+}
+
+Task<void> throw_op() {
+    using namespace std::chrono_literals;
+    co_await sleep(1ms);
+    throw std::runtime_error("throw_op");
+    co_return;
+}
 
 class DiscoveryImpl : private MessageHandler {
   public:
@@ -51,7 +67,13 @@ class DiscoveryImpl : private MessageHandler {
 
     Task<void> run() {
         using namespace concurrency::awaitable_wait_for_all;
-        co_await (server_.run() && discover_more() && periodic_ping_check());
+        using namespace std::chrono_literals;
+
+        auto executor = co_await this_coro::executor;
+        auto strand = make_strand(executor);
+
+        co_await (sleep(1s) && discover_more(strand) && periodic_ping_check2(strand));
+        //co_await (server_.run() && discover_more() && periodic_ping_check());
     }
 
     void discover_more_needed() {
@@ -77,19 +99,13 @@ class DiscoveryImpl : private MessageHandler {
         co_return;
     }
 
-    Task<void> discover_more() {
-        using namespace std::chrono_literals;
-        auto local_node_id = node_url_().public_key();
+    Task<void> discover_more(boost::asio::strand<boost::asio::any_io_executor>& strand) {
+        co_await co_spawn(strand, throw_op(), use_awaitable);
+    }
 
+    Task<void> periodic_ping_check2(boost::asio::strand<boost::asio::any_io_executor>& strand) {
         while (true) {
-            //co_await discover_more_needed_notifier_.wait();
-
-            auto total_neighbors = co_await find::lookup(local_node_id, server_, on_neighbors_signal_, node_db_);
-
-            if (total_neighbors == 0) {
-                //co_await sleep(10s);
-                discover_more_needed_notifier_.notify();
-            }
+            co_await co_spawn(strand, noop(), use_awaitable);
         }
     }
 
@@ -100,14 +116,15 @@ class DiscoveryImpl : private MessageHandler {
         while (true) {
             auto now = std::chrono::system_clock::now();
             auto node_ids = co_await node_db_.find_ping_candidates(now, 10);
+            log::Debug() << "find_ping_candidates DONE";
             if (node_ids.empty()) {
                 co_await sleep(10s);
                 continue;
             }
 
-            for (auto& node_id : node_ids) {
-                co_await ping::ping_check(node_id, std::nullopt, local_node_url, server_, on_pong_signal_, node_db_);
-            }
+//            for (auto& node_id : node_ids) {
+//                co_await ping::ping_check(node_id, std::nullopt, local_node_url, server_, on_pong_signal_, node_db_);
+//            }
         }
     }
 

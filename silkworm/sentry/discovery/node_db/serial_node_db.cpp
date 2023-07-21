@@ -18,6 +18,7 @@
 
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <silkworm/infra/common/log.hpp>
 
 namespace silkworm::sentry::discovery::node_db {
 
@@ -83,8 +84,18 @@ Task<std::optional<size_t>> SerialNodeDb::find_distance(NodeId id) {
     return co_spawn(strand_, db_.find_distance(std::move(id)), use_awaitable);
 }
 
-Task<std::vector<NodeId>> SerialNodeDb::find_ping_candidates(Time time, size_t limit) {
-    return co_spawn(strand_, db_.find_ping_candidates(std::move(time), limit), use_awaitable);
+Task<std::vector<NodeId>> noop() {
+    co_return std::vector<NodeId>{};
+}
+
+Task<std::vector<NodeId>> throw_op() {
+    throw std::runtime_error("throw_op");
+    co_return std::vector<NodeId>{};
+}
+
+Task<std::vector<NodeId>> SerialNodeDb::find_ping_candidates(Time , size_t ) {
+    log::Debug() << "SerialNodeDb::find_ping_candidates";
+    return co_spawn(strand_, noop(), use_awaitable);
 }
 
 Task<std::vector<NodeId>> SerialNodeDb::find_useful_nodes(Time min_pong_time, size_t limit) {
@@ -99,8 +110,9 @@ Task<void> SerialNodeDb::mark_taken_lookup_candidates(const std::vector<NodeId>&
     return co_spawn(strand_, db_.mark_taken_lookup_candidates(ids, std::move(time)), use_awaitable);
 }
 
-Task<std::vector<NodeId>> SerialNodeDb::take_lookup_candidates(FindLookupCandidatesQuery query, Time time) {
-    return co_spawn(strand_, db_.take_lookup_candidates(std::move(query), std::move(time)), use_awaitable);
+Task<std::vector<NodeId>> SerialNodeDb::take_lookup_candidates(FindLookupCandidatesQuery , Time ) {
+    log::Debug() << "SerialNodeDb::take_lookup_candidates";
+    return co_spawn(strand_, throw_op(), use_awaitable);
 }
 
 Task<std::vector<NodeId>> SerialNodeDb::find_peer_candidates(FindPeerCandidatesQuery query) {
@@ -111,8 +123,8 @@ Task<void> SerialNodeDb::mark_taken_peer_candidates(const std::vector<NodeId>& i
     return co_spawn(strand_, db_.mark_taken_peer_candidates(ids, std::move(time)), use_awaitable);
 }
 
-Task<std::vector<NodeId>> SerialNodeDb::take_peer_candidates(FindPeerCandidatesQuery query, Time time) {
-    return co_spawn(strand_, db_.take_peer_candidates(std::move(query), std::move(time)), use_awaitable);
+Task<std::vector<NodeId>> SerialNodeDb::take_peer_candidates(FindPeerCandidatesQuery , Time ) {
+    return co_spawn(strand_, throw_op(), use_awaitable);
 }
 
 Task<void> SerialNodeDb::delete_node(NodeId id) {

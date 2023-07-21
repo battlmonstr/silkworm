@@ -48,23 +48,9 @@ Task<void> sleep_and_reply(concurrency::Channel<std::map<EccPublicKey, NodeAddre
     using namespace std::chrono_literals;
     co_await sleep(300ms);
 
-    std::map<EccPublicKey, NodeAddress> node_addresses = {
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
-    };
-
-    ch.try_send(node_addresses);
+    ch.try_send({});
     co_await sleep(100ms);
-    ch.try_send(node_addresses);
+//    ch.try_send({});
 
     co_await sleep(100s);
 }
@@ -85,19 +71,6 @@ Task<size_t> find_neighbors(
 
     auto executor = co_await boost::asio::this_coro::executor;
     concurrency::Channel<std::map<EccPublicKey, NodeAddress>> neighbors_channel{executor, 2};
-//    auto on_neighbors_handler = [&]([[maybe_unused]] NeighborsMessage message, [[maybe_unused]] EccPublicKey sender_node_id) {
-//        log::Debug("disc_v4") << "neighbors_channel.try_send";
-//        neighbors_channel.try_send({});
-////        if ((sender_node_id == node_id) && !is_expired_message_expiration(message.expiration)) {
-////            log::Debug("disc_v4") << "neighbors_channel.try_send";
-////            for ([[maybe_unused]] auto& n : message.node_addresses) {
-////                //log::Debug("disc_v4") << "on_neighbors_handler " << n.first.hex() << " - " << n.second.endpoint;
-////            }
-////            neighbors_channel.try_send(std::move(message.node_addresses));
-////        }
-//    };
-//
-    //boost::signals2::scoped_connection neighbors_subscription(on_neighbors_signal.connect(on_neighbors_handler));
 
     FindNodeMessage find_node_message{
         local_node_id,

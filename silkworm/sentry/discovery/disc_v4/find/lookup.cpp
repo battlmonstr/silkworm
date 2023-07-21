@@ -19,6 +19,7 @@
 #include <chrono>
 
 #include <silkworm/infra/concurrency/awaitable_wait_for_one.hpp>
+#include <silkworm/infra/common/log.hpp>
 #include <silkworm/infra/concurrency/parallel_group_utils.hpp>
 #include <silkworm/infra/concurrency/timeout.hpp>
 #include <silkworm/sentry/discovery/disc_v4/ping/ping_check.hpp>
@@ -42,6 +43,7 @@ Task<size_t> lookup(
         /* limit = */ 1,
     };
     auto node_ids = co_await db.take_lookup_candidates(std::move(query), now);
+    log::Debug() << "take_lookup_candidates DONE";
 
     size_t total_neighbors = 0;
     auto group_task = concurrency::generate_parallel_group_task(node_ids.size(), [&](size_t index) -> Task<void> {
