@@ -82,12 +82,12 @@ class DiscoveryImpl : private MessageHandler {
         auto local_node_id = node_url_().public_key();
 
         while (true) {
-            co_await discover_more_needed_notifier_.wait();
+            //co_await discover_more_needed_notifier_.wait();
 
             auto total_neighbors = co_await find::lookup(local_node_id, server_, on_neighbors_signal_, node_db_);
 
             if (total_neighbors == 0) {
-                co_await sleep(10s);
+                //co_await sleep(10s);
                 discover_more_needed_notifier_.notify();
             }
         }

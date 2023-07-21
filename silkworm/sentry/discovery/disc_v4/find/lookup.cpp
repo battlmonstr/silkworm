@@ -39,18 +39,19 @@ Task<size_t> lookup(
     node_db::NodeDb::FindLookupCandidatesQuery query{
         /* min_pong_time = */ ping::min_valid_pong_time(now),
         /* max_lookup_time = */ now - 10min,
-        /* limit = */ 3,
+        /* limit = */ 1,
     };
     auto node_ids = co_await db.take_lookup_candidates(std::move(query), now);
 
     size_t total_neighbors = 0;
     auto group_task = concurrency::generate_parallel_group_task(node_ids.size(), [&](size_t index) -> Task<void> {
         auto node_id = node_ids[index];
-        total_neighbors += co_await find_neighbors(node_id, std::nullopt, local_node_id, message_sender, on_neighbors_signal, db);
+        auto x = boost::asio::ip::udp::endpoint{boost::asio::ip::make_address("129.213.137.117"), 30303};
+        total_neighbors += co_await find_neighbors(node_id, x, local_node_id, message_sender, on_neighbors_signal, db);
     });
 
     try {
-        co_await (std::move(group_task) || concurrency::timeout(1s));
+        co_await (std::move(group_task) || concurrency::timeout(500ms, "asd"));
     } catch (const concurrency::TimeoutExpiredError&) {
     }
 

@@ -33,8 +33,41 @@
 #include <silkworm/sentry/discovery/disc_v4/common/message_expiration.hpp>
 #include <silkworm/sentry/discovery/disc_v4/common/node_address.hpp>
 #include <silkworm/sentry/discovery/disc_v4/common/node_distance.hpp>
+#include <silkworm/sentry/common/sleep.hpp>
 
 namespace silkworm::sentry::discovery::disc_v4::find {
+
+NodeAddress na(const char* ip) {
+    return NodeAddress{
+        boost::asio::ip::udp::endpoint(boost::asio::ip::make_address(ip), 30666),
+        30666,
+    };
+}
+
+Task<void> sleep_and_reply(concurrency::Channel<std::map<EccPublicKey, NodeAddress>>& ch) {
+    using namespace std::chrono_literals;
+    co_await sleep(300ms);
+
+    std::map<EccPublicKey, NodeAddress> node_addresses = {
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+        { EccPublicKey::deserialize_hex("0e440cf3ab2827ecff30d1f584221ae54ce6e943855bf4d111b16a008de16b1f7ace44b1934416772ed24bfa434f891aec46cda0be513482d42fca6473c5678b"), na("173.249.33.239") },
+    };
+
+    ch.try_send(node_addresses);
+    co_await sleep(100ms);
+    ch.try_send(node_addresses);
+
+    co_await sleep(100s);
+}
 
 Task<size_t> find_neighbors(
     EccPublicKey node_id,
@@ -46,26 +79,25 @@ Task<size_t> find_neighbors(
     using namespace std::chrono_literals;
     using namespace concurrency::awaitable_wait_for_one;
 
-    boost::asio::ip::udp::endpoint endpoint;
-    if (endpoint_opt) {
-        endpoint = *endpoint_opt;
-    } else {
-        auto address = co_await db.find_node_address_v4(node_id);
-        if (!address) {
-            throw std::runtime_error("find_neighbors: node address not found");
-        }
-        endpoint = boost::asio::ip::udp::endpoint(address->ip, address->port_disc);
-    }
+    log::Debug("disc_v4") << "find_neighbors";
+
+    boost::asio::ip::udp::endpoint endpoint = *endpoint_opt;
 
     auto executor = co_await boost::asio::this_coro::executor;
     concurrency::Channel<std::map<EccPublicKey, NodeAddress>> neighbors_channel{executor, 2};
-    auto on_neighbors_handler = [&](NeighborsMessage message, EccPublicKey sender_node_id) {
-        if ((sender_node_id == node_id) && !is_expired_message_expiration(message.expiration)) {
-            neighbors_channel.try_send(std::move(message.node_addresses));
-        }
-    };
-
-    boost::signals2::scoped_connection neighbors_subscription(on_neighbors_signal.connect(on_neighbors_handler));
+//    auto on_neighbors_handler = [&]([[maybe_unused]] NeighborsMessage message, [[maybe_unused]] EccPublicKey sender_node_id) {
+//        log::Debug("disc_v4") << "neighbors_channel.try_send";
+//        neighbors_channel.try_send({});
+////        if ((sender_node_id == node_id) && !is_expired_message_expiration(message.expiration)) {
+////            log::Debug("disc_v4") << "neighbors_channel.try_send";
+////            for ([[maybe_unused]] auto& n : message.node_addresses) {
+////                //log::Debug("disc_v4") << "on_neighbors_handler " << n.first.hex() << " - " << n.second.endpoint;
+////            }
+////            neighbors_channel.try_send(std::move(message.node_addresses));
+////        }
+//    };
+//
+    //boost::signals2::scoped_connection neighbors_subscription(on_neighbors_signal.connect(on_neighbors_handler));
 
     FindNodeMessage find_node_message{
         local_node_id,
@@ -85,30 +117,9 @@ Task<size_t> find_neighbors(
 
     std::map<EccPublicKey, NodeAddress> neighbors_node_addresses;
     try {
-        neighbors_node_addresses = std::get<0>(co_await (neighbors_channel.receive() || concurrency::timeout(500ms)));
+        neighbors_node_addresses = std::get<0>(co_await (neighbors_channel.receive() || concurrency::timeout(500ms) || sleep_and_reply(neighbors_channel)));
     } catch (const concurrency::TimeoutExpiredError&) {
         co_return 0;
-    }
-
-    for (auto& [neighbor_id, neighbor_node_address] : neighbors_node_addresses) {
-        auto ip = neighbor_node_address.endpoint.address();
-        if (ip_classify(ip) != IpAddressType::kRegular) {
-            continue;
-        }
-        if (neighbor_id == local_node_id) {
-            continue;
-        }
-
-        node_db::NodeAddress address{
-            std::move(ip),
-            neighbor_node_address.endpoint.port(),
-            neighbor_node_address.port_rlpx,
-        };
-
-        auto distance = node_distance(neighbor_id, local_node_id);
-
-        co_await db.upsert_node_address(neighbor_id, std::move(address));
-        co_await db.update_distance(neighbor_id, distance);
     }
 
     co_return neighbors_node_addresses.size();
