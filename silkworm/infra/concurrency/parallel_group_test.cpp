@@ -14,31 +14,60 @@
    limitations under the License.
 */
 
-#include "parallel_group_utils.hpp"
-
 #include <catch2/catch.hpp>
 
 #include "../test_util/task_runner.hpp"
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/this_coro.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/co_spawn.hpp>
 
-#include "awaitable_wait_for_one.hpp"
-#include "timeout.hpp"
-#include <boost/system/errc.hpp>
-#include <boost/system/system_error.hpp>
+#include "awaitable_wait_for_all.hpp"
 
 namespace silkworm::concurrency {
 
-Task<void> f() {
-    using namespace awaitable_wait_for_one;
-    using namespace std::chrono_literals;
-    co_await (generate_parallel_group_task(100, [](size_t index) -> Task<void> {
-        throw boost::system::system_error(make_error_code(boost::system::errc::operation_canceled));
-        co_return;
-        //co_await timeout(1s);
-    }) || timeout(1ms));
+using namespace boost::asio;
+using namespace std::chrono_literals;
+
+Task<void> sleep(std::chrono::milliseconds duration) {
+    auto executor = co_await this_coro::executor;
+    deadline_timer timer(executor);
+    timer.expires_from_now(boost::posix_time::milliseconds(duration.count()));
+    co_await timer.async_wait(use_awaitable);
 }
 
-TEST_CASE("parallel_group.co_spawn_cancellation_handler") {
-    for (int i = 0; i < 1000; i++) {
+Task<void> noop() {
+    co_return;
+}
+
+Task<void> throw_op() {
+    co_await sleep(1ms);
+    throw std::runtime_error("throw_op");
+    co_return;
+}
+
+Task<void> spawn_throw_op(boost::asio::strand<boost::asio::any_io_executor>& strand) {
+    co_await co_spawn(strand, throw_op(), use_awaitable);
+}
+
+Task<void> spawn_noop_loop(boost::asio::strand<boost::asio::any_io_executor>& strand) {
+    while (true) {
+        co_await co_spawn(strand, noop(), use_awaitable);
+    }
+}
+
+Task<void> f() {
+    using namespace concurrency::awaitable_wait_for_all;
+    auto executor = co_await this_coro::executor;
+    auto strand = make_strand(executor);
+
+    co_await (sleep(1s) && spawn_throw_op(strand) && spawn_noop_loop(strand));
+}
+
+TEST_CASE("parallel_group.co_spawn_cancellation_handler_bug") {
+    while (true) {
         test_util::TaskRunner runner;
         CHECK_THROWS(runner.run(f()));
     }
