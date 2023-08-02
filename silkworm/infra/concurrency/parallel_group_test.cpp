@@ -19,9 +19,7 @@
 
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/awaitable.hpp>
-#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/basic_waitable_timer.hpp>
-#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
@@ -29,8 +27,12 @@
 #include <boost/asio/use_future.hpp>
 #include <catch2/catch.hpp>
 
+#include <silkworm/infra/concurrency/awaitable_wait_for_all.hpp>
+#include <silkworm/infra/concurrency/co_spawn_sw.hpp>
+
 using namespace boost::asio;
 using namespace boost::asio::experimental;
+using namespace silkworm::concurrency;
 using namespace std::chrono_literals;
 
 awaitable<void> sleep(std::chrono::milliseconds duration) {
@@ -50,27 +52,28 @@ awaitable<void> throw_op() {
 }
 
 awaitable<void> spawn_throw_op(strand<any_io_executor>& strand) {
-    co_await co_spawn(strand, throw_op(), use_awaitable);
+    co_await co_spawn_sw(strand, throw_op(), use_awaitable);
 }
 
 awaitable<void> spawn_noop_loop(strand<any_io_executor>& strand) {
     while (true) {
-        co_await co_spawn(strand, noop(), use_awaitable);
+        co_await co_spawn_sw(strand, noop(), use_awaitable);
     }
 }
 
-awaitable<void> run() {
-    using namespace awaitable_operators;
-    auto executor = co_await this_coro::executor;
+awaitable<void> co_spawn_cancellation_handler_bug() {
+    using namespace awaitable_wait_for_all;
+    auto executor = co_await boost::asio::this_coro::executor;
     auto strand = make_strand(executor);
 
     try {
         co_await (sleep(1s) && spawn_throw_op(strand) && spawn_noop_loop(strand));
-    } catch (std::runtime_error&) {}
+    } catch (std::runtime_error&) {
+    }
 }
 
 TEST_CASE("parallel_group.co_spawn_cancellation_handler_bug") {
     io_context context;
-    auto run_future = co_spawn(context, run(), use_future);
+    auto run_future = co_spawn_sw(context, co_spawn_cancellation_handler_bug(), use_future);
     context.run();
 }
