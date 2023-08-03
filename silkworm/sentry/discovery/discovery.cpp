@@ -104,45 +104,53 @@ void DiscoveryImpl::setup_node_db() {
 Task<std::vector<EnodeUrl>> DiscoveryImpl::request_peer_urls(
     size_t max_count,
     std::vector<EnodeUrl> exclude_urls) {
-    using namespace std::chrono_literals;
-
-    std::vector<node_db::NodeId> exclude_ids;
-    for (auto& url : exclude_urls)
-        exclude_ids.push_back(url.public_key());
-
-    auto now = std::chrono::system_clock::now();
-    node_db::NodeDb::FindPeerCandidatesQuery query{
-        /* min_pong_time = */ disc_v4::ping::min_valid_pong_time(now),
-        /* max_peer_disconnected_time = */ now - 60s,
-        /* max_taken_time = */ now - 30s,
-        std::move(exclude_ids),
-        max_count,
-    };
-    auto peer_ids = co_await node_db_.interface().take_peer_candidates(std::move(query), now);
-
     std::vector<EnodeUrl> peer_urls;
-    for (auto& peer_id : peer_ids) {
-        auto address = co_await node_db_.interface().find_node_address_v4(peer_id);
-        if (!address) {
-            address = co_await node_db_.interface().find_node_address_v6(peer_id);
-        }
-        if (address) {
-            EnodeUrl peer_url{
-                peer_id,
-                address->ip,
-                address->port_disc,
-                address->port_rlpx,
-            };
-            peer_urls.push_back(std::move(peer_url));
-        }
-    }
-
-    if (peer_urls.empty()) {
-        disc_v4_discovery_.discover_more_needed();
-    }
-
+    disc_v4_discovery_.discover_more_needed();
     co_return peer_urls;
 }
+
+// Task<std::vector<EnodeUrl>> DiscoveryImpl::request_peer_urls(
+//     size_t max_count,
+//     std::vector<EnodeUrl> exclude_urls) {
+//     using namespace std::chrono_literals;
+//
+//     std::vector<node_db::NodeId> exclude_ids;
+//     for (auto& url : exclude_urls)
+//         exclude_ids.push_back(url.public_key());
+//
+//     auto now = std::chrono::system_clock::now();
+//     node_db::NodeDb::FindPeerCandidatesQuery query{
+//         /* min_pong_time = */ disc_v4::ping::min_valid_pong_time(now),
+//         /* max_peer_disconnected_time = */ now - 60s,
+//         /* max_taken_time = */ now - 30s,
+//         std::move(exclude_ids),
+//         max_count,
+//     };
+//     auto peer_ids = co_await node_db_.interface().take_peer_candidates(std::move(query), now);
+//
+//     std::vector<EnodeUrl> peer_urls;
+//     for (auto& peer_id : peer_ids) {
+//         auto address = co_await node_db_.interface().find_node_address_v4(peer_id);
+//         if (!address) {
+//             address = co_await node_db_.interface().find_node_address_v6(peer_id);
+//         }
+//         if (address) {
+//             EnodeUrl peer_url{
+//                 peer_id,
+//                 address->ip,
+//                 address->port_disc,
+//                 address->port_rlpx,
+//             };
+//             peer_urls.push_back(std::move(peer_url));
+//         }
+//     }
+//
+//     if (peer_urls.empty()) {
+//         disc_v4_discovery_.discover_more_needed();
+//     }
+//
+//     co_return peer_urls;
+// }
 
 bool DiscoveryImpl::is_static_peer_url(const EnodeUrl& peer_url) {
     return std::any_of(peer_urls_.cbegin(), peer_urls_.cend(), [&peer_url](const EnodeUrl& it) {

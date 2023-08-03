@@ -225,7 +225,7 @@ Task<void> PeerManager::discover_peers(
 
         // if nothing new retry after a delay
         if (discovered_peer_urls.empty()) {
-            co_await sleep(10s);
+            co_await sleep(1s);
         }
     }
 }

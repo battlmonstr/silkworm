@@ -86,10 +86,11 @@ class DiscoveryImpl : private MessageHandler {
         while (true) {
             co_await discover_more_needed_notifier_.wait();
 
+            log::Debug("sentry") << "find::lookup";
             auto total_neighbors = co_await find::lookup(local_node_id, server_, on_neighbors_signal_, node_db_);
 
             if (total_neighbors == 0) {
-                co_await sleep(10s);
+                co_await sleep(0s);
                 discover_more_needed_notifier_.notify();
             }
         }
@@ -98,6 +99,7 @@ class DiscoveryImpl : private MessageHandler {
     Task<void> periodic_ping_check() {
         using namespace std::chrono_literals;
         auto local_node_url = node_url_();
+        co_await sleep(1000s);
 
         while (true) {
             auto now = std::chrono::system_clock::now();

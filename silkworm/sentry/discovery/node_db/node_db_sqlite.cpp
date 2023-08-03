@@ -378,10 +378,10 @@ class NodeDbSqliteImpl : public NodeDb {
     Task<std::vector<NodeId>> find_lookup_candidates(FindLookupCandidatesQuery query_params) override {
         static const char* sql = R"sql(
             SELECT id FROM nodes
-            WHERE ((last_pong_time IS NOT NULL) AND (last_pong_time > ?))
+            WHERE ((last_pong_time IS NOT NULL) AND (last_pong_time <> ?))
                 AND ((peer_is_useless IS NULL) OR (peer_is_useless == 0))
-                AND ((lookup_time IS NULL) OR (lookup_time < ?))
-            ORDER BY distance, lookup_time
+                AND ((lookup_time IS NULL) OR (lookup_time <> ?))
+            ORDER BY RANDOM()
             LIMIT ?
         )sql";
 

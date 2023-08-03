@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <execinfo.h>
+
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <exception>
@@ -25,10 +28,12 @@
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
+#include <boost/exception/get_error_info.hpp>
 
 #include <silkworm/infra/common/log.hpp>
 #include <silkworm/infra/concurrency/context_pool_settings.hpp>
 #include <silkworm/infra/concurrency/idle_strategy.hpp>
+typedef boost::error_info<struct tag_stacktrace, std::pair<std::array<void*, 128>, int>> traced;
 
 namespace silkworm::concurrency {
 
@@ -119,6 +124,10 @@ class ContextPool {
                     context.execute_loop();
                 } catch (const std::exception& ex) {
                     SILK_CRIT << "ContextPool context.execute_loop exception: " << ex.what();
+
+                    const auto callstack = boost::get_error_info<traced>(ex);
+                    backtrace_symbols_fd(&callstack->first[0], callstack->second, 1);
+
                     std::terminate();
                 }
                 SILK_TRACE << "Thread end context[" << i << "] thread_id: " << std::this_thread::get_id();
