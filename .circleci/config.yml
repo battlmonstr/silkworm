@@ -102,24 +102,16 @@ commands:
             then
                 conan_profile=linux_x64_clang_13_release
             else
-                conan_profile=linux_x64_gcc_11_release
+                conan_profile=experimental/linux_arm64_gcc_12_release
             fi
             echo "export CONAN_PROFILE='$conan_profile'" >> "$BASH_ENV"
             cp "cmake/profiles/$conan_profile" "$HOME/selected_conan_profile"
-      - restore_cache:
-          name: "Restore Conan cache"
-          key: &conan-cache-key conan-machine-{{ .Environment.CIRCLE_JOB }}-<<parameters.compiler_id>>-<<parameters.compiler_version>>-{{checksum "../selected_conan_profile"}}-{{checksum "conanfile.py"}}
       - build:
           build_type: <<parameters.build_type>>
           compiler_id: <<parameters.compiler_id>>
           compiler_version: <<parameters.compiler_version>>
           conan_profile: $CONAN_PROFILE
           target: <<parameters.target>>
-      - save_cache:
-          name: "Save Conan cache"
-          key: *conan-cache-key
-          paths:
-            - ~/.conan
 
   test:
     parameters:
@@ -225,7 +217,7 @@ jobs:
         default: true
     machine:
       image: ubuntu-2204:2023.04.2
-    resource_class: 2xlarge
+    resource_class: arm.2xlarge
     steps:
       - checkout_with_submodules:
           ethereum_tests: <<parameters.ethereum_tests>>
@@ -409,45 +401,8 @@ workflows:
       not:
         equal: [ master, <<pipeline.git.branch>> ]
     jobs:
-      - lint
       - linux-release:
           name: linux-gcc-<<pipeline.parameters.gcc_version_latest>>-release
           compiler_id: gcc
           compiler_version: <<pipeline.parameters.gcc_version_latest>>
           ethereum_tests: false
-          requires:
-            - lint
-      - linux-release:
-          name: linux-clang-<<pipeline.parameters.clang_version_min>>-release
-          compiler_id: clang
-          compiler_version: <<pipeline.parameters.clang_version_min>>
-          ethereum_tests: false
-          requires:
-            - lint
-
-  integration:
-    when:
-      or:
-        - equal: [ master, <<pipeline.git.branch>> ]
-        - matches: { pattern: "^ci\\/.+$", value: <<pipeline.git.branch>> }
-    jobs:
-      - linux-release:
-          name: linux-gcc-<<pipeline.parameters.gcc_version_min>>-release
-          compiler_id: gcc
-          compiler_version: <<pipeline.parameters.gcc_version_min>>
-      - linux-gcc-thread-sanitizer
-      - linux-clang-coverage
-      - linux-clang-address-sanitizer
-      - linux-clang-tidy
-      - linux-wasm-build
-  
-  fuzzer:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 6"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - linux-clang-fuzzer
