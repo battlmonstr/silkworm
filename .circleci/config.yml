@@ -379,6 +379,20 @@ jobs:
           working_directory: ~/build
           command: wasmer cmd/test/core_test --stack-size 16777216
 
+  test1:
+    machine:
+      image: ubuntu-2204:2023.04.2
+    steps:
+      - checkout_with_submodules:
+          ethereum_tests: false
+      - run:
+          name: "Install Conan"
+          command: sudo pip3 install conan==1.60.2 chardet
+      - run:
+          command: |
+            gcc --version
+            cmake -B ~/build -S .
+
 parameters:
   clang_version_min:
     type: integer
@@ -401,8 +415,4 @@ workflows:
       not:
         equal: [ master, <<pipeline.git.branch>> ]
     jobs:
-      - linux-release:
-          name: linux-gcc-<<pipeline.parameters.gcc_version_latest>>-release
-          compiler_id: gcc
-          compiler_version: <<pipeline.parameters.gcc_version_latest>>
-          ethereum_tests: false
+      - test1
