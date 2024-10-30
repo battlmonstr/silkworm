@@ -358,6 +358,8 @@ SILKWORM_EXPORT int silkworm_execute_blocks_perpetual(SilkwormHandle handle, MDB
                                                       bool write_change_sets, bool write_receipts, bool write_call_traces,
                                                       uint64_t* last_executed_block, int* mdbx_error_code) SILKWORM_NOEXCEPT;
 
+SILKWORM_EXPORT int silkworm_test_env_start_read(MDBX_env* mdbx_env) SILKWORM_NOEXCEPT;
+
 /**
  * \brief Finalize the Silkworm C API library.
  * \param[in] handle A valid Silkworm instance handle got with silkworm_init.

@@ -585,6 +585,17 @@ int silkworm_execute_blocks_ephemeral(SilkwormHandle handle, MDBX_txn* mdbx_txn,
 }
 
 SILKWORM_EXPORT
+int silkworm_test_env_start_read(MDBX_env* env_ptr) SILKWORM_NOEXCEPT {
+    db::EnvUnmanaged env{env_ptr};
+    try {
+        [[maybe_unused]] auto _ = env.start_read();
+    } catch (const std::exception& ex) {
+        return -123;
+    }
+    return 0;
+}
+
+SILKWORM_EXPORT
 int silkworm_execute_blocks_perpetual(SilkwormHandle handle, MDBX_env* mdbx_env, uint64_t chain_id,
                                       uint64_t start_block, uint64_t max_block, uint64_t batch_size,
                                       bool write_change_sets, bool write_receipts, bool write_call_traces,

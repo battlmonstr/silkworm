@@ -171,9 +171,6 @@ static inline mdbx::cursor::move_operation move_operation(CursorMoveDirection di
 
     ::mdbx::env_managed env{env_path.native(), cp, op, config.shared};
 
-    // MDBX will not change the page size if db already exists, so we need to read value
-    config.page_size = env.get_pagesize();
-
     if (!config.shared) {
         // C++ bindings don't have set_option
         ::mdbx::error::success_or_throw(::mdbx_env_set_option(env, MDBX_opt_rp_augment_limit, 32_Mebi));
