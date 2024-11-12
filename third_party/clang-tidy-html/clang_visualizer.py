@@ -1,9 +1,12 @@
+#!/usr/bin/env python3
+
 import argparse
 import logging
 import re
 import sys
 from requests import Session
 from requests.adapters import HTTPAdapter
+from urllib3.response import HTTPResponse
 from pathlib import Path
 from bs4 import BeautifulSoup
 import ssl
@@ -77,6 +80,8 @@ def main():
     parser.add_argument(
         '-d', '--checks_dict_url', help="Override the latest checks list, (e.g., v14.0.0 uses \
         https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/list.html).", nargs='?', type=str)
+    parser.add_argument(
+    	'-c', '--count', action='store_true', help="Count the total number of reported checks.")
 
     try:
         args = parser.parse_args()
@@ -87,11 +92,11 @@ def main():
 
     tidy_log_lines: Path = args.file
     output_path: Path = Path(args.out)
-    clang_tidy_visualizer(tidy_log_lines, output_path, args.checks_dict_url)
-
+    clang_tidy_visualizer(tidy_log_lines, output_path, args.count, args.checks_dict_url)
 
 def clang_tidy_visualizer(tidy_log_file: Path,
                           output_html_file: Path = Path("clang.html"),
+                          print_total_count = False,
                           checks_dict_url = None):
     tidy_log_lines = tidy_log_file.read_text().splitlines()
     clang_base_url = "https://clang.llvm.org/extra/clang-tidy/checks/"
@@ -107,10 +112,6 @@ def clang_tidy_visualizer(tidy_log_file: Path,
     checks_list = list(checks_dict.keys())
     checks_list.sort()
 
-    # Updates the newest clang-tidy checks to your checks.py file.
-    write_checks_file(
-        checks_list, to_file=output_html_file.parent / "clang-tidy-checks.py")
-
     checks_used = [0] * len(checks_list)
 
     # Increments each occurrence of a check.
@@ -120,6 +121,9 @@ def clang_tidy_visualizer(tidy_log_file: Path,
         for check_name in checks_list:
             if content.find(check_name.replace('/', '-')) != -1:
                 checks_used[checks_list.index(check_name)] += 1
+
+    if print_total_count:
+    	print(sum(checks_used))
 
     # Counts the max number of used checks in the log file.
     num_used_checks = 0
@@ -174,7 +178,6 @@ def clang_tidy_visualizer(tidy_log_file: Path,
                         details += 1
 
     with open(output_html_file, "w") as clang_html:
-        log.info(f"Writing results to {output_html_file}")
         # Functions for writing to the clang.html file.
         writeHeader(clang_html)
         writeList(clang_html, num_used_checks, names_of_used,
@@ -190,10 +193,16 @@ class TLSAdapter(HTTPAdapter):
         kwargs['ssl_context'] = ctx
         return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
 
+class FileAdapter(HTTPAdapter):
+    def send(self, request, *args, **kwargs):
+        resp = HTTPResponse(body=open(request.url[7:], 'rb'), status=200, preload_content=False)
+        return self.build_response(request, resp)
+
 # Scrape data from clang-tidy's official list of current checks.
 def find_checks_dict(checks_dict_url: str):
     session = Session()
     session.mount('https://', TLSAdapter())
+    session.mount('file://', FileAdapter())
     try:
         res = session.get(checks_dict_url)
     except Exception as e:
@@ -322,7 +331,7 @@ def writeList(f, num_used_checks, names_of_used, clang_base_url, total_num_check
 """)
 
     # Attach a button to the list of all checks in clang. Link opens in a new tab.
-    clang_check_url = clang_base_url.replace('/', '\/') + 'list.html'
+    clang_check_url = clang_base_url + 'list.html'
     external_name = 'Clang-Tidy Checks'
     f.write("""
                 <button id=\"externalLink\" type=\"button\" class=\"btn\" onclick=\"window.open('{}','_blank')\"
@@ -364,8 +373,7 @@ def writeSortedLogs(f, tidy_log_lines, num_used_checks, names_of_used, clang_bas
 
         # Attach a button to the specific check's docs in clang. Link opens in a new tab.
         docs_check_name = toClangDocsName(names_of_used[check_idx].name)
-        clang_check_url = clang_base_url.replace(
-            '/', '\/') + docs_check_name + '.html'
+        clang_check_url = clang_base_url + docs_check_name + '.html'
         external_name = 'Documentation'
         f.write("""
                     <button id=\"externalLink\" type=\"button\" class=\"btn\" onclick=\"window.open('{}','_blank')\"
@@ -556,3 +564,6 @@ def writeScript(f, num_used_checks):
 
 </html>
 """.format(num_used_checks))
+
+if __name__ == "__main__":
+    main()

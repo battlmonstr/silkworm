@@ -30,7 +30,7 @@ commands:
           command: |
             if [[ <<parameters.ethereum_tests>> == false ]]
             then
-              git config submodule.ethereum-tests.update none
+                git config submodule.ethereum-tests.update none
             fi
 
             git submodule sync
@@ -74,9 +74,9 @@ commands:
           command:  |
             if [[ "<<parameters.target>>" == "all" ]]
             then
-                cmake --build ~/build -j16
+                cmake --build ~/build -j16 | tee ~/build/build.log
             else
-                cmake --build ~/build -j16 --target <<parameters.target>>
+                cmake --build ~/build -j16 --target <<parameters.target>> | tee ~/build/build.log
             fi
 
   install_conan:
@@ -344,6 +344,21 @@ jobs:
           build_type: Debug
           compiler_id: clang
           compiler_version: <<pipeline.parameters.clang_version_latest>>
+      - run:
+          name: "clang-tidy report"
+          command: |
+            set -e
+            pip3 install --user --no-warn-script-location --quiet beautifulsoup4==4.12.3 lxml==5.3.0 requests==2.32.3
+            warn_count=$(./third_party/clang-tidy-html/clang_visualizer.py ~/build/build.log --out=/dev/null --checks_dict_url=file://third_party/clang-tidy-html/checks_list_<<pipeline.parameters.clang_version_latest>>.html --count)
+            grep "warning:" ~/build/build.log
+            echo
+            echo "clang-tidy produced $warn_count warnings"
+            echo "see the build step output for more details"
+            if (( warn_count > 50 ))
+            then
+                echo "go fix the warnings now!"
+                exit 1
+            fi          
 
   linux-clang-tidy-diff:
     environment:
